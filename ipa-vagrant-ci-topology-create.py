@@ -119,7 +119,7 @@ end
     def _shell_generate_install_basic_pkgs(self):
         content = [
             "sudo dnf copr enable mkosek/freeipa-master -y",
-            "sudo dnf config-manager --enablerepo updates-testing"
+            "sudo dnf config-manager --enablerepo updates-testing",
             '[ "$(ls -A /vagrant/{rpmdir})" ] && sudo dnf install /vagrant/{rpmdir}/*.rpm -y'.format(rpmdir=RPMS_DIR),
         ]
 
