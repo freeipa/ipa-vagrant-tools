@@ -69,12 +69,16 @@ end
 """
 
     def __init__(self, domain, box, num_replicas=0, num_clients=0,
-                 extra_packages=[]):
+                 extra_packages=[], mem_controller=MEMORY_CONTROLLER,
+                 mem_server=MEMORY_SERVER, mem_client=MEMORY_CLIENT):
         self.domain = domain
         self.box = box
         self.num_replicas = num_replicas
         self.num_clients = num_clients
         self.extra_packages = extra_packages
+        self.mem_controller = mem_controller
+        self.mem_server = mem_server
+        self.mem_client = mem_client
 
         self.network_octets = '192.168.%s' % random.randint(100, 200)
         self.ip_addrs = self._generate_ip_addresses(self.network_octets,
@@ -212,7 +216,7 @@ end
             box_url=box_mapping[self.box],
             ipaddr_last_octet=self.ip_addrs['controller']['last_octet'],
             primary_machine=", primary: true",
-            memory=MEMORY_CONTROLLER,
+            memory=self.mem_controller,
             shell='\n'.join(shell_basic_conf +
                             self._shell_generate_cp_controller_key() +
                             self._shell_set_hostname('controller'))
@@ -224,7 +228,7 @@ end
             box_url=box_mapping[self.box],
             ipaddr_last_octet=self.ip_addrs['master']['last_octet'],
             primary_machine="",
-            memory=MEMORY_SERVER,
+            memory=self.mem_server,
             shell='\n'.join(shell_basic_conf +
                             self._shell_generate_add_controller_key_to_athorized() +
                             self._shell_set_hostname('master'))
@@ -238,7 +242,7 @@ end
                 box_url=box_mapping[self.box],
                 ipaddr_last_octet=addr['last_octet'],
                 primary_machine="",
-                memory=MEMORY_SERVER,
+                memory=self.mem_server,
                 shell='\n'.join(shell_basic_conf +
                                 self._shell_generate_add_controller_key_to_athorized() +
                                 self._shell_set_hostname(name))
@@ -253,7 +257,7 @@ end
                 box_url=box_mapping[self.box],
                 ipaddr_last_octet=addr['last_octet'],
                 primary_machine="",
-                memory=MEMORY_CLIENT,
+                memory=self.mem_client,
                 shell='\n'.join(shell_basic_conf +
                                 self._shell_generate_add_controller_key_to_athorized() +
                                 self._shell_set_hostname(name))
@@ -346,11 +350,25 @@ def main():
                         help="Allows to specify packages that will be "
                              "installed from repository", default=[],
                         metavar="NAME")
+    parser.add_argument('--memory-controller', dest="mem_controller",
+                        help="Allows to specify memory for controller "
+                             "(default %s MB)" % MEMORY_CONTROLLER,
+                        metavar="MBytes", default=MEMORY_CONTROLLER)
+    parser.add_argument('--memory-server', dest="mem_server",
+                        help="Allows to specify memory for server "
+                             "(default %s MB)" % MEMORY_SERVER,
+                        metavar="MBytes", default=MEMORY_SERVER)
+    parser.add_argument('--memory-client', dest="mem_client",
+                        help="Allows to specify memory for client "
+                             "(default %s MB)" % MEMORY_CLIENT,
+                        metavar="MBytes", default=MEMORY_CLIENT)
 
     args = parser.parse_args()
 
-    vagrant_file = VagrantFile(args.domain, "f22", args.replicas, args.clients,
-                               extra_packages=args.packages)
+    vagrant_file = VagrantFile(
+        args.domain, "f22", args.replicas, args.clients,
+        extra_packages=args.packages, mem_controller=args.mem_controller,
+        mem_server=args.mem_server, mem_client=args.mem_client)
 
     create_directories(args.topology_name)
 
