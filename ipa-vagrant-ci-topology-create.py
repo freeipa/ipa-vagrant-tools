@@ -70,7 +70,8 @@ end
 
     def __init__(self, domain, box, num_replicas=0, num_clients=0,
                  extra_packages=[], mem_controller=MEMORY_CONTROLLER,
-                 mem_server=MEMORY_SERVER, mem_client=MEMORY_CLIENT):
+                 mem_server=MEMORY_SERVER, mem_client=MEMORY_CLIENT,
+                 enforcing=False):
         self.domain = domain
         self.box = box
         self.num_replicas = num_replicas
@@ -79,6 +80,7 @@ end
         self.mem_controller = mem_controller
         self.mem_server = mem_server
         self.mem_client = mem_client
+        self.enforcing = False
 
         self.network_octets = '192.168.%s' % random.randint(100, 200)
         self.ip_addrs = self._generate_ip_addresses(self.network_octets,
@@ -203,8 +205,15 @@ end
         ]
         return content
 
+    def _shell_generate_setenforce(self):
+        content = [
+            "sudo setenforce %s" % '1' if self.enforcing else '0',
+        ]
+        return content
+
     def generate_vagrant_file(self):
         shell_basic_conf = []
+        shell_basic_conf.extend(self._shell_generate_setenforce())
         shell_basic_conf.extend(self._shell_generate_install_basic_pkgs())
         shell_basic_conf.extend(self._shell_generate_hosts_file())
         shell_basic_conf.extend(self._shell_generate_resolv_file())
@@ -362,13 +371,17 @@ def main():
                         help="Allows to specify memory for client "
                              "(default %s MB)" % MEMORY_CLIENT,
                         metavar="MBytes", default=MEMORY_CLIENT)
+    parser.add_argument('--selinux-enforce', dest="enforcing",
+                        action='store_true', default=False,
+                        help="Set SELinux to enforce mode")
 
     args = parser.parse_args()
 
     vagrant_file = VagrantFile(
         args.domain, "f22", args.replicas, args.clients,
         extra_packages=args.packages, mem_controller=args.mem_controller,
-        mem_server=args.mem_server, mem_client=args.mem_client)
+        mem_server=args.mem_server, mem_client=args.mem_client,
+        enforcing=args.enforcing)
 
     create_directories(args.topology_name)
 
