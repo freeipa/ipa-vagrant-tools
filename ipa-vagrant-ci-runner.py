@@ -43,7 +43,7 @@ class RunTest(object):
         session.exec_command(
             "sudo "
             "IPATEST_YAML_CONFIG=/vagrant/ipa-test-config.yaml "
-            "ipa-run-tests "
+            "ipa-run-tests --verbose"
             "{test_name}".format(test_name=self.test_name))
         self.print_output(session)
         sys.stdout.write("EXIT STATUS: {}\n".format(session.recv_exit_status()))
