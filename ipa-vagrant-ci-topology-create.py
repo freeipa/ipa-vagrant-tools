@@ -124,6 +124,8 @@ end
 
     def _shell_generate_install_basic_pkgs(self):
         content = [
+            "sudo dnf clean all",
+            "sudo dnf upgrade dnf*",  # upgrade dnf to fix it
             "sudo dnf copr enable mkosek/freeipa-master -y",
             "sudo dnf config-manager --set-enabled updates-testing",
             '[ "$(ls -A /vagrant/{rpmdir})" ] && sudo dnf install /vagrant/{rpmdir}/*.rpm -y'.format(rpmdir=RPMS_DIR),
