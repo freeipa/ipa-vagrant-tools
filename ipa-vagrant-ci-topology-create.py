@@ -128,6 +128,7 @@ end
             "sudo dnf upgrade dnf* -y",  # upgrade dnf to fix it
             "sudo dnf copr enable mkosek/freeipa-master -y",
             "sudo dnf config-manager --set-enabled updates-testing",
+            "sudo dnf upgrade --best --allowerasing",
             '[ "$(ls -A /vagrant/{rpmdir})" ] && sudo dnf install /vagrant/{rpmdir}/*.rpm -y'.format(rpmdir=RPMS_DIR),
         ]
 
