@@ -80,7 +80,7 @@ end
         self.mem_controller = mem_controller
         self.mem_server = mem_server
         self.mem_client = mem_client
-        self.enforcing = False
+        self.enforcing = enforcing
 
         self.network_octets = '192.168.%s' % random.randint(100, 200)
         self.ip_addrs = self._generate_ip_addresses(self.network_octets,
@@ -210,7 +210,7 @@ end
 
     def _shell_generate_setenforce(self):
         content = [
-            "sudo setenforce %s" % '1' if self.enforcing else '0',
+            "sudo setenforce %s" % ('1' if self.enforcing else '0'),
         ]
         return content
 
