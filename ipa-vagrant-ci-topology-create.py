@@ -36,10 +36,17 @@ PACKAGES = [
 DEFAULT_BOX = "f23"
 
 box_mapping = {
-    "f22": "http://download.fedoraproject.org/pub/fedora/linux/releases/22/Cloud/x86_64/Images/Fedora-Cloud-Base-Vagrant-22-20150521.x86_64.vagrant-libvirt.box",
-    "f23": "http://download.fedoraproject.org/pub/fedora/linux/releases/23/Cloud/x86_64/Images/Fedora-Cloud-Base-Vagrant-23-20151030.x86_64.vagrant-libvirt.box",
+    "f22": {"libvirt": { "box": "f22",
+                         "box_url": "http://download.fedoraproject.org/pub/fedora/linux/releases/22/Cloud/x86_64/Images/Fedora-Cloud-Base-Vagrant-22-20150521.x86_64.vagrant-libvirt.box",
+                       },
+            "virtualbox": { "box": "box-cutter/fedora22", },
+    },
+    "f23": {"libvirt": { "box": "f23",
+                         "box_url": "http://download.fedoraproject.org/pub/fedora/linux/releases/23/Cloud/x86_64/Images/Fedora-Cloud-Base-Vagrant-23-20151030.x86_64.vagrant-libvirt.box",
+                       },
+            "virtualbox": { "box": "box-cutter/fedora23",},
+    },
 }
-
 
 
 
@@ -50,18 +57,20 @@ NETWORK="{network}" # first three octets
 DOMAIN="{domain}"
 
 Vagrant.configure(2) do |config|
+    {images}
     {boxes}
 end
 """
 
     BOX_TEMPLATE = """
     config.vm.define "{conf_name}" {primary_machine} do |{conf_name}|
-        {conf_name}.vm.box = "{box}"
-        {conf_name}.vm.box_url = "{box_url}"
         {conf_name}.vm.network "private_network", ip: "#{{NETWORK}}.{ipaddr_last_octet}"
         {conf_name}.vm.hostname = "{conf_name}.#{{DOMAIN}}"
 
-        {conf_name}.vm.provider :libvirt do |domain|
+        {conf_name}.vm.provider "libvirt" do |domain|
+            domain.memory = {memory}
+        end
+        {conf_name}.vm.provider "virtualbox" do |domain|
             domain.memory = {memory}
         end
 
@@ -124,6 +133,27 @@ end
             i += 1
 
         return ip_addresses
+
+    def _generate_provider_specific_images(self, box):
+        PROVIDER_IMAGES_OVERRIDE_TEMPLATE = """
+    config.vm.provider "{provider}" do |domain, override|
+{overrides}
+    end
+"""
+        PROVIDER_IMAGES_OVERRIDE_LINE_TEMPLATE = "\t\toverride.vm.{key} = \"{value}\"\n"
+        images = ""
+        for provider in box_mapping[box]:
+            overrides = ""
+            for key in box_mapping[box][provider]:
+                overrides += PROVIDER_IMAGES_OVERRIDE_LINE_TEMPLATE.format(
+                    key = key,
+                    value = box_mapping[box][provider][key],
+                )
+            images += PROVIDER_IMAGES_OVERRIDE_TEMPLATE.format(
+                provider = provider,
+                overrides = overrides,
+            )
+        return images
 
     def _shell_generate_install_basic_pkgs(self):
         content = [
@@ -227,8 +257,6 @@ end
 
         controller = self.BOX_TEMPLATE.format(
             conf_name="controller",
-            box=self.box,
-            box_url=box_mapping[self.box],
             ipaddr_last_octet=self.ip_addrs['controller']['last_octet'],
             primary_machine=", primary: true",
             memory=self.mem_controller,
@@ -239,8 +267,6 @@ end
 
         master = self.BOX_TEMPLATE.format(
             conf_name="master",
-            box=self.box,
-            box_url=box_mapping[self.box],
             ipaddr_last_octet=self.ip_addrs['master']['last_octet'],
             primary_machine="",
             memory=self.mem_server,
@@ -253,8 +279,6 @@ end
         for name, addr in self.ip_addrs['replicas'].items():
             replica = self.BOX_TEMPLATE.format(
                 conf_name=name,
-                box=self.box,
-                box_url=box_mapping[self.box],
                 ipaddr_last_octet=addr['last_octet'],
                 primary_machine="",
                 memory=self.mem_server,
@@ -268,8 +292,6 @@ end
         for name, addr in self.ip_addrs['clients'].items():
             client = self.BOX_TEMPLATE.format(
                 conf_name=name,
-                box=self.box,
-                box_url=box_mapping[self.box],
                 ipaddr_last_octet=addr['last_octet'],
                 primary_machine="",
                 memory=self.mem_client,
@@ -286,7 +308,10 @@ end
             "\n".join(clients_conf)
         ])
 
+        provider_specific_images = self._generate_provider_specific_images(self.box)
+
         return self.CONFIG_TEMPLATE.format(
+            images = provider_specific_images,
             network=self.network_octets,
             domain=self.domain,
             boxes=boxes_conf_export,
