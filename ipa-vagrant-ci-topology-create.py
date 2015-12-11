@@ -33,8 +33,11 @@ PACKAGES = [
 ]
 
 
+DEFAULT_BOX = "f23"
+
 box_mapping = {
-    "f22": "http://download.fedoraproject.org/pub/fedora/linux/releases/22/Cloud/x86_64/Images/Fedora-Cloud-Base-Vagrant-22-20150521.x86_64.vagrant-libvirt.box"
+    "f22": "http://download.fedoraproject.org/pub/fedora/linux/releases/22/Cloud/x86_64/Images/Fedora-Cloud-Base-Vagrant-22-20150521.x86_64.vagrant-libvirt.box",
+    "f23": "http://download.fedoraproject.org/pub/fedora/linux/releases/23/Cloud/x86_64/Images/Fedora-Cloud-Base-Vagrant-23-20151030.x86_64.vagrant-libvirt.box",
 }
 
 
@@ -377,11 +380,14 @@ def main():
     parser.add_argument('--selinux-enforce', dest="enforcing",
                         action='store_true', default=False,
                         help="Set SELinux to enforce mode")
+    parser.add_argument('--box', dest="box", default=DEFAULT_BOX,
+                        help="Set box that will be used (default: %s)" %
+                             DEFAULT_BOX)
 
     args = parser.parse_args()
 
     vagrant_file = VagrantFile(
-        args.domain, "f22", args.replicas, args.clients,
+        args.domain, args.box, args.replicas, args.clients,
         extra_packages=args.packages, mem_controller=args.mem_controller,
         mem_server=args.mem_server, mem_client=args.mem_client,
         enforcing=args.enforcing)
