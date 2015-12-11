@@ -8,12 +8,12 @@ This script creates new directory structure and configuration files for vagrant 
 Basic usage:
 
 ```
-$ python3 ipa-vagrant-ci-topology-create.py basic-test --replicas 1 --clients 1 --add-package={freeipa-server,freeipa-tests}
+$ python3 ipa-vagrant-ci-topology-create.py basic-test --replicas 1 --clients 1 --add-package={freeipa-server,freeipa-server-dns,freeipa-tests}
 $ cd basic-test
 $ vagrant up
 $ vagrant ssh
-$ IPATEST_YAML_CONFIG=/vagrant/ipa-test-config.yaml ipa-run-tests test_integration/test_simple_replication.py
-<enjoy/>i
+$ IPATEST_YAML_CONFIG=/vagrant/ipa-test-config.yaml ipa-run-tests test_integration/test_simple_replication.py --verbose
+<enjoy/>
 $ logout
 $ vagrant destroy
 ```
