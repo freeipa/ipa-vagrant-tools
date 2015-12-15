@@ -229,14 +229,20 @@ end
 
         return config
 
-    def _shell_generate_add_controller_key_to_athorized(self):
+    def _shell_generate_create_root_ssh_dir(self):
         content = [
+            "sudo bash -c \"[ -d /root/.ssh ] || mkdir -p /root/.ssh\""
+        ]
+        return content
+
+    def _shell_generate_add_controller_key_to_athorized(self):
+        content = self._shell_generate_create_root_ssh_dir() + [
             "sudo cat '/vagrant/{sshpub}' >> /root/.ssh/authorized_keys".format(sshpub=CONTROLLER_SSH_PUB_KEY),
         ]
         return content
 
     def _shell_generate_cp_controller_key(self):
-        content = [
+        content = self._shell_generate_create_root_ssh_dir() + [
             "sudo cp /vagrant/{sshpriv} /root/.ssh/id_rsa".format(sshpriv=CONTROLLER_SSH_KEY)
         ]
         return content
