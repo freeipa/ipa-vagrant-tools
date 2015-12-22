@@ -58,6 +58,7 @@ class VagrantFile(object):
 #
 NETWORK="{network}" # first three octets
 DOMAIN="{domain}"
+VM_NAME_PREFIX = "{vm_name_prefix}"
 
 Vagrant.configure(2) do |config|
     {images}
@@ -318,8 +319,10 @@ end
         ])
 
         provider_specific_images = self._generate_provider_specific_images(self.box)
+        prefix = pwd.getpwuid(os.getuid()).pw_name
 
         return self.CONFIG_TEMPLATE.format(
+            vm_name_prefix = prefix,
             images = provider_specific_images,
             network=self.network_octets,
             domain=self.domain,
