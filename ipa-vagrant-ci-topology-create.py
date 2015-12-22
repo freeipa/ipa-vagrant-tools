@@ -53,6 +53,9 @@ box_mapping = {
 class VagrantFile(object):
 
     CONFIG_TEMPLATE = """
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+#
 NETWORK="{network}" # first three octets
 DOMAIN="{domain}"
 
