@@ -61,6 +61,7 @@ DOMAIN="{domain}"
 VM_NAME_PREFIX = "{vm_name_prefix}"
 
 Vagrant.configure(2) do |config|
+    {providers}
     {images}
     {boxes}
 end
@@ -320,10 +321,12 @@ end
         ])
 
         provider_specific_images = self._generate_provider_specific_images(self.box)
+        providers_config = ''
         prefix = pwd.getpwuid(os.getuid()).pw_name
 
         return self.CONFIG_TEMPLATE.format(
             vm_name_prefix = prefix,
+            providers = providers_config,
             images = provider_specific_images,
             network=self.network_octets,
             domain=self.domain,
