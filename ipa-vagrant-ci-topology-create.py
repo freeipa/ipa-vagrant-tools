@@ -84,10 +84,10 @@ end
     end
 """
 
-    def __init__(self, domain, box, num_replicas=0, num_clients=0,
-                 extra_packages=[], mem_controller=MEMORY_CONTROLLER,
-                 mem_server=MEMORY_SERVER, mem_client=MEMORY_CLIENT,
-                 enforcing=False):
+    def __init__(self, domain, box, topology_path, num_replicas=0,
+                 num_clients=0, extra_packages=[],
+                 mem_controller=MEMORY_CONTROLLER, mem_server=MEMORY_SERVER,
+                 mem_client=MEMORY_CLIENT, enforcing=False):
         self.domain = domain
         self.box = box
         self.num_replicas = num_replicas
@@ -96,6 +96,7 @@ end
         self.mem_controller = mem_controller
         self.mem_server = mem_server
         self.mem_client = mem_client
+        self.topology_path = topology_path
         self.enforcing = enforcing
 
         self.network_octets = '192.168.%s' % random.randint(100, 200)
@@ -423,8 +424,9 @@ def main():
 
     args = parser.parse_args()
 
+    topology_path = os.path.abspath(args.topology_name)
     vagrant_file = VagrantFile(
-        args.domain, args.box, args.replicas, args.clients,
+        args.domain, args.box, topology_path, args.replicas, args.clients,
         extra_packages=args.packages, mem_controller=args.mem_controller,
         mem_server=args.mem_server, mem_client=args.mem_client,
         enforcing=args.enforcing)
@@ -447,7 +449,7 @@ def main():
         if proc.returncode is not None and proc.returncode != 0:
             raise RuntimeError("Failed to generate SSH key: %s" % errs)
 
-    with io.open(os.path.join(args.topology_name, VAGRANT_FILE), "w") as f:
+    with io.open(os.path.join(topology_path, VAGRANT_FILE), "w") as f:
         f.write(vagrant_file.generate_vagrant_file())
         f.close()
 
