@@ -36,15 +36,15 @@ PACKAGES = [
 DEFAULT_BOX = "f23"
 
 box_mapping = {
-    "f22": {"libvirt": { "box": "f22",
-                         "box_url": "http://download.fedoraproject.org/pub/fedora/linux/releases/22/Cloud/x86_64/Images/Fedora-Cloud-Base-Vagrant-22-20150521.x86_64.vagrant-libvirt.box",
+    "f22": {"libvirt": { "override.vm.box": "f22",
+                         "override.vm.box_url": "http://download.fedoraproject.org/pub/fedora/linux/releases/22/Cloud/x86_64/Images/Fedora-Cloud-Base-Vagrant-22-20150521.x86_64.vagrant-libvirt.box",
                        },
-            "virtualbox": { "box": "box-cutter/fedora22", },
+            "virtualbox": { "override.vm.box": "box-cutter/fedora22", },
     },
-    "f23": {"libvirt": { "box": "f23",
-                         "box_url": "http://download.fedoraproject.org/pub/fedora/linux/releases/23/Cloud/x86_64/Images/Fedora-Cloud-Base-Vagrant-23-20151030.x86_64.vagrant-libvirt.box",
+    "f23": {"libvirt": { "override.vm.box": "f23",
+                         "override.vm.box_url": "http://download.fedoraproject.org/pub/fedora/linux/releases/23/Cloud/x86_64/Images/Fedora-Cloud-Base-Vagrant-23-20151030.x86_64.vagrant-libvirt.box",
                        },
-            "virtualbox": { "box": "box-cutter/fedora23",},
+            "virtualbox": { "override.vm.box": "box-cutter/fedora23", },
     },
 }
 
@@ -143,7 +143,7 @@ end
 {overrides}
     end
 """
-        PROVIDER_IMAGES_OVERRIDE_LINE_TEMPLATE = "\t\toverride.vm.{key} = \"{value}\"\n"
+        PROVIDER_IMAGES_OVERRIDE_LINE_TEMPLATE = "\t\t{key} = \"{value}\"\n"
         images = ""
         for provider in box_mapping[box]:
             overrides = ""
