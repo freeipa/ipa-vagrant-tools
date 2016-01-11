@@ -10,6 +10,8 @@ import sys
 import io
 import subprocess
 import yaml  # python3-PyYAML
+import pwd
+import time
 
 RPMS_DIR = "rpms"
 PROVISIONING_DIR = "provisioning"
@@ -36,15 +38,17 @@ PACKAGES = [
 DEFAULT_BOX = "f23"
 
 box_mapping = {
-    "f22": {"libvirt": { "box": "f22",
-                         "box_url": "http://download.fedoraproject.org/pub/fedora/linux/releases/22/Cloud/x86_64/Images/Fedora-Cloud-Base-Vagrant-22-20150521.x86_64.vagrant-libvirt.box",
+    "f22": {"libvirt": { "override.vm.box": "f22",
+                         "override.vm.box_url": "http://download.fedoraproject.org/pub/fedora/linux/releases/22/Cloud/x86_64/Images/Fedora-Cloud-Base-Vagrant-22-20150521.x86_64.vagrant-libvirt.box",
                        },
-            "virtualbox": { "box": "box-cutter/fedora22", },
+            "virtualbox": { "override.vm.box": "box-cutter/fedora22", },
+            "ovirt3": { "domain.template": "ipa-Fedora-23-x86_64-developer-brq", },
     },
-    "f23": {"libvirt": { "box": "f23",
-                         "box_url": "http://download.fedoraproject.org/pub/fedora/linux/releases/23/Cloud/x86_64/Images/Fedora-Cloud-Base-Vagrant-23-20151030.x86_64.vagrant-libvirt.box",
+    "f23": {"libvirt": { "override.vm.box": "f23",
+                         "override.vm.box_url": "http://download.fedoraproject.org/pub/fedora/linux/releases/23/Cloud/x86_64/Images/Fedora-Cloud-Base-Vagrant-23-20151030.x86_64.vagrant-libvirt.box",
                        },
-            "virtualbox": { "box": "box-cutter/fedora23",},
+            "virtualbox": { "override.vm.box": "box-cutter/fedora23", },
+            "ovirt3": { "domain.template": "ipa-Fedora-22-x86_64-developer-brq", },
     },
 }
 
@@ -53,10 +57,15 @@ box_mapping = {
 class VagrantFile(object):
 
     CONFIG_TEMPLATE = """
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+#
 NETWORK="{network}" # first three octets
 DOMAIN="{domain}"
+VM_NAME_PREFIX = "{vm_name_prefix}"
 
 Vagrant.configure(2) do |config|
+    {providers}
     {images}
     {boxes}
 end
@@ -73,6 +82,10 @@ end
         {conf_name}.vm.provider "virtualbox" do |domain|
             domain.memory = {memory}
         end
+        {conf_name}.vm.provider "ovirt3" do |domain|
+            domain.memory = {memory}
+            domain.name = "#{{VM_NAME_PREFIX}}-{conf_name}-{time}"
+        end
 
         {conf_name}.vm.provision "shell", inline: <<-SHELL
 {shell}
@@ -80,10 +93,10 @@ end
     end
 """
 
-    def __init__(self, domain, box, num_replicas=0, num_clients=0,
-                 extra_packages=[], mem_controller=MEMORY_CONTROLLER,
-                 mem_server=MEMORY_SERVER, mem_client=MEMORY_CLIENT,
-                 enforcing=False):
+    def __init__(self, domain, box, topology_path, num_replicas=0,
+                 num_clients=0, extra_packages=[],
+                 mem_controller=MEMORY_CONTROLLER, mem_server=MEMORY_SERVER,
+                 mem_client=MEMORY_CLIENT, enforcing=False):
         self.domain = domain
         self.box = box
         self.num_replicas = num_replicas
@@ -92,6 +105,7 @@ end
         self.mem_controller = mem_controller
         self.mem_server = mem_server
         self.mem_client = mem_client
+        self.topology_path = topology_path
         self.enforcing = enforcing
 
         self.network_octets = '192.168.%s' % random.randint(100, 200)
@@ -134,13 +148,94 @@ end
 
         return ip_addresses
 
+    def _generate_ovirt3_configuration(self,
+            api_user=None, api_password='Secret123', api_url=None,
+            vm_user=None, vm_ssh_private_key=None,
+            lab_datacenter='', lab_cluster=''):
+        config_name = "ovirt3_user_config.rb"
+        USER_CONFIG_TEMPLATE = """
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+#
+OvirtConfig = Hash.new
+OvirtConfig[:api] = {{
+    :user => "{api_user}",
+    :password => "{api_password}",
+    :url => "{api_url}",
+}}
+OvirtConfig[:vm] = {{
+    :user => "{vm_user}",
+    :ssh_private_key => "{vm_ssh_private_key}",
+}}
+OvirtConfig[:lab] = {{
+    :datacenter => "{lab_datacenter}",
+    :cluster => "{lab_cluster}",
+}}
+"""
+        OVIRT_PROVIDER_CONFIG_TEMPLATE = """
+    config.vm.provider "ovirt3" do |domain, override|
+        # load user config
+        require_relative "{ovirt_config}"
+
+        # set API location and credentials
+        api_config = OvirtConfig[:api]
+        domain.url = api_config[:url]
+        domain.username = api_config[:user]
+        domain.password = api_config[:password]
+
+        # set VM credentials
+        vm_config = OvirtConfig[:vm]
+        override.ssh.username = vm_config[:user]
+        override.ssh.private_key_path = vm_config[:ssh_private_key]
+
+        # define datacenter and cluster where VM will be created
+        lab_config = OvirtConfig[:lab]
+        domain.datacenter = lab_config[:datacenter]
+        domain.cluster = lab_config[:cluster]
+
+        # define default VM presets
+        domain.cpus = 1
+        domain.memory = 1024
+        domain.console = 'vnc' #could also be 'spice'
+
+        # non-admin users have API filtered
+        domain.filtered_api = true
+        # lab certificate is not signed by trusted CA
+        domain.ca_no_verify = true
+
+        # each provider requires box but here it is just dummy because we use lab template
+        override.vm.box = 'dummy'
+        override.vm.box_url = 'https://github.com/myoung34/vagrant-ovirt3/blob/master/example_box/dummy.box?raw=true'
+    end
+"""
+        if not all((api_user, vm_user, vm_ssh_private_key)):
+            user_info = pwd.getpwuid(os.getuid())
+            if not api_user:
+                api_user = user_info.pw_name
+            if not vm_user:
+                vm_user = user_info.pw_name
+            if not vm_ssh_private_key:
+                vm_ssh_private_key = os.path.join(user_info.pw_dir,
+                    '.ssh', 'id_rsa')
+
+        if not api_url:
+            api_url = 'https://localhost:443'
+
+        with open(os.path.join(self.topology_path, config_name), 'w') as f:
+            f.write(USER_CONFIG_TEMPLATE.format(api_user=api_user,
+                api_password=api_password, api_url=api_url,
+                vm_user=vm_user, vm_ssh_private_key=vm_ssh_private_key,
+                lab_datacenter=lab_datacenter, lab_cluster=lab_cluster))
+
+        return OVIRT_PROVIDER_CONFIG_TEMPLATE.format(ovirt_config=config_name)
+
     def _generate_provider_specific_images(self, box):
         PROVIDER_IMAGES_OVERRIDE_TEMPLATE = """
     config.vm.provider "{provider}" do |domain, override|
 {overrides}
     end
 """
-        PROVIDER_IMAGES_OVERRIDE_LINE_TEMPLATE = "\t\toverride.vm.{key} = \"{value}\"\n"
+        PROVIDER_IMAGES_OVERRIDE_LINE_TEMPLATE = "\t\t{key} = \"{value}\"\n"
         images = ""
         for provider in box_mapping[box]:
             overrides = ""
@@ -254,6 +349,7 @@ end
         return content
 
     def generate_vagrant_file(self):
+        timestamp=time.time()
         shell_basic_conf = []
         shell_basic_conf.extend(self._shell_generate_setenforce())
         shell_basic_conf.extend(self._shell_generate_install_basic_pkgs())
@@ -266,6 +362,7 @@ end
             ipaddr_last_octet=self.ip_addrs['controller']['last_octet'],
             primary_machine=", primary: true",
             memory=self.mem_controller,
+            time=timestamp,
             shell='\n'.join(shell_basic_conf +
                             self._shell_generate_cp_controller_key() +
                             self._shell_set_hostname('controller'))
@@ -276,6 +373,7 @@ end
             ipaddr_last_octet=self.ip_addrs['master']['last_octet'],
             primary_machine="",
             memory=self.mem_server,
+            time=timestamp,
             shell='\n'.join(shell_basic_conf +
                             self._shell_generate_add_controller_key_to_athorized() +
                             self._shell_set_hostname('master'))
@@ -288,6 +386,7 @@ end
                 ipaddr_last_octet=addr['last_octet'],
                 primary_machine="",
                 memory=self.mem_server,
+                time=timestamp,
                 shell='\n'.join(shell_basic_conf +
                                 self._shell_generate_add_controller_key_to_athorized() +
                                 self._shell_set_hostname(name))
@@ -301,6 +400,7 @@ end
                 ipaddr_last_octet=addr['last_octet'],
                 primary_machine="",
                 memory=self.mem_client,
+                time=timestamp,
                 shell='\n'.join(shell_basic_conf +
                                 self._shell_generate_add_controller_key_to_athorized() +
                                 self._shell_set_hostname(name))
@@ -315,8 +415,13 @@ end
         ])
 
         provider_specific_images = self._generate_provider_specific_images(self.box)
+        providers_config = ''
+        providers_config += self._generate_ovirt3_configuration()
+        prefix = pwd.getpwuid(os.getuid()).pw_name
 
         return self.CONFIG_TEMPLATE.format(
+            vm_name_prefix = prefix,
+            providers = providers_config,
             images = provider_specific_images,
             network=self.network_octets,
             domain=self.domain,
@@ -417,8 +522,9 @@ def main():
 
     args = parser.parse_args()
 
+    topology_path = os.path.abspath(args.topology_name)
     vagrant_file = VagrantFile(
-        args.domain, args.box, args.replicas, args.clients,
+        args.domain, args.box, topology_path, args.replicas, args.clients,
         extra_packages=args.packages, mem_controller=args.mem_controller,
         mem_server=args.mem_server, mem_client=args.mem_client,
         enforcing=args.enforcing)
@@ -441,7 +547,7 @@ def main():
         if proc.returncode is not None and proc.returncode != 0:
             raise RuntimeError("Failed to generate SSH key: %s" % errs)
 
-    with io.open(os.path.join(args.topology_name, VAGRANT_FILE), "w") as f:
+    with io.open(os.path.join(topology_path, VAGRANT_FILE), "w") as f:
         f.write(vagrant_file.generate_vagrant_file())
         f.close()
 
