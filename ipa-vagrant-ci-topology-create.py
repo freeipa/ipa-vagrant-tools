@@ -20,15 +20,28 @@ RPMS_DIR = "rpms"
 PROVISIONING_DIR = "provisioning"
 VAGRANT_FILE = "Vagrantfile"
 ANSIBLE_FILE = "ansible.yml"
-CI_CONFIG_FILE = "ipa-test-config.yaml"
 CONTROLLER_SSH_KEY = "controller_rsa"
 CONTROLLER_SSH_PUB_KEY = "controller_rsa.pub"
 IP_ADDR_FIRST = 100
 
+# please keep ABC order of keys
 DEFAULT_CONFIG = dict(
+    ci_config_file="ipa-test-config.yaml",
+    ipa_ci_ad_admin_name="Administrator",
+    ipa_ci_ad_admin_password="Secret123456",
+    ipa_ci_admin_name="admin",
+    ipa_ci_admin_password="Secret123",
+    ipa_ci_debug=False,
+    ipa_ci_dirman_dn="cn=Directory Manager",
+    ipa_ci_dirman_password="Secret123",
+    ipa_ci_dns_forwarder="10.34.78.1",
+    ipa_ci_nis_domain="ipatest",
+    ipa_ci_ntp_server="1.pool.ntp.org",
+    ipa_ci_root_ssh_key_filename="/root/.ssh/id_rsa",
+    ipa_ci_test_dir="/root/ipatests",
+    memory_client=1024,
     memory_controller=1024,
     memory_server=2048,
-    memory_client=1024,
 )
 
 
@@ -502,20 +515,33 @@ OvirtConfig[:lab] = {{
             boxes=boxes_conf_export,
         )
 
-    def export_ci_config_file(self, path):
+    def export_ci_config_file(self,
+                              path,
+                              ad_admin_name,
+                              ad_admin_password,
+                              admin_name,
+                              admin_password,
+                              debug,
+                              dirman_dn,
+                              dirman_password,
+                              dns_forwarder,
+                              nis_domain,
+                              ntp_server,
+                              root_ssh_key_filename,
+                              test_dir):
         config = dict()
-        config['ad_admin_name'] = "Administrator"
-        config['ad_admin_password'] = "Secret123456"
-        config['admin_name'] = "admin"
-        config['admin_password'] = "Secret123"
-        config['debug'] = False
-        config['dirman_dn'] = "cn=Directory Manager"
-        config['dirman_password'] = "Secret123"
-        config['dns_forwarder'] = "10.34.78.1"
-        config['nis_domain'] = "ipatest"
-        config['ntp_server'] = "1.pool.ntp.org"
-        config['root_ssh_key_filename'] = "/root/.ssh/id_rsa"
-        config['test_dir'] = "/root/ipatests"
+        config['ad_admin_name'] = ad_admin_name
+        config['ad_admin_password'] = ad_admin_password
+        config['admin_name'] = admin_name
+        config['admin_password'] = admin_password
+        config['debug'] = debug
+        config['dirman_dn'] = dirman_dn
+        config['dirman_password'] = dirman_password
+        config['dns_forwarder'] = dns_forwarder
+        config['nis_domain'] = nis_domain
+        config['ntp_server'] = ntp_server
+        config['root_ssh_key_filename'] = root_ssh_key_filename
+        config['test_dir'] = test_dir
 
         hosts = []
         master = {
@@ -649,8 +675,20 @@ def main():
         f.write(vagrant_file.generate_vagrant_file())
         f.close()
 
-    vagrant_file.export_ci_config_file(os.path.join(args.topology_name,
-        CI_CONFIG_FILE))
+    vagrant_file.export_ci_config_file(
+        os.path.join(args.topology_name, config.ci_config_file),
+        config.ipa_ci_ad_admin_name,
+        config.ipa_ci_ad_admin_password,
+        config.ipa_ci_admin_name,
+        config.ipa_ci_admin_password,
+        config.ipa_ci_debug,
+        config.ipa_ci_dirman_dn,
+        config.ipa_ci_dirman_password,
+        config.ipa_ci_dns_forwarder,
+        config.ipa_ci_nis_domain,
+        config.ipa_ci_ntp_server,
+        config.ipa_ci_root_ssh_key_filename,
+        config.ipa_ci_test_dir)
 
 if __name__ == '__main__':
     try:
