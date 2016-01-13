@@ -17,3 +17,6 @@ $ IPATEST_YAML_CONFIG=/vagrant/ipa-test-config.yaml ipa-run-tests test_integrati
 $ logout
 $ vagrant destroy
 ```
+
+## vagrant-up-paralel.sh
+Not so smart bash script that runs vagrant provisioning in local directory in parallel way.
