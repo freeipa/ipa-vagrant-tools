@@ -4,6 +4,7 @@
 
 
 import argparse
+import copy
 import random
 import os
 import sys
@@ -12,6 +13,8 @@ import subprocess
 import yaml  # python3-PyYAML
 import pwd
 import time
+
+DEFAULT_CONFIG_FILENAME = os.path.expanduser("~/.ipa_vagrant_config.yaml")
 
 RPMS_DIR = "rpms"
 PROVISIONING_DIR = "provisioning"
@@ -22,9 +25,11 @@ CONTROLLER_SSH_KEY = "controller_rsa"
 CONTROLLER_SSH_PUB_KEY = "controller_rsa.pub"
 IP_ADDR_FIRST = 100
 
-MEMORY_CONTROLLER = 1024
-MEMORY_SERVER = 2048
-MEMORY_CLIENT = 1024
+DEFAULT_CONFIG = dict(
+    memory_controller=1024,
+    memory_server=2048,
+    memory_client=1024,
+)
 
 
 PACKAGES = [
@@ -52,6 +57,76 @@ box_mapping = {
     },
 }
 
+
+class IPAVagrantConfig(object):
+
+    def __init__(self, filename=None, parser_args=None):
+        self.filename=filename
+        self.config = copy.copy(DEFAULT_CONFIG)
+
+        self.load_config_from_file()
+
+        if parser_args:
+            self.__add_parser_args(parser_args)
+
+    def __getattr__(self, item):
+        try:
+            return self.config[item]
+        except KeyError:
+            raise AttributeError()
+
+    def __add_parser_args(self, parser_args):
+        """Check if any of configuration keyword has been passed to parser and
+        update configuration.
+        """
+        for key in self.config.keys():
+            try:
+                val = getattr(parser_args, key, None)
+                if val is not None:
+                    self.config[key] = val
+            except KeyError:
+                pass
+
+    def load_config_from_file(self):
+        if self.filename:
+            filename = self.filename
+        else:
+            filename = DEFAULT_CONFIG_FILENAME
+            if not os.path.isfile(filename):
+                return  # do not fail with default config
+
+        with io.open(filename, "r") as f:
+            res = yaml.safe_load(f)
+
+        for key in res.keys():
+            if key not in self.config:
+                # all known options must be there, if not, please add missing
+                # option to DEFAULT_CONFIG variable
+                raise KeyError("Unknown option '{}'".format(key))
+            elif not isinstance(res[key], type(self.config[key])):
+                raise TypeError(
+                    "{key} type: expected {expected}, got {got}".format(
+                        key=key, expected=type(self.config[key]),
+                        got=type(res[key])))
+            else:
+                self.config[key] = res[key]
+
+    def export_config(self):
+        filename = self.get_filename()
+
+        with io.open(filename, "w") as f:
+            yaml.safe_dump(self.config, f, default_flow_style=False)
+            f.flush()
+
+        return filename
+
+    def get_filename(self):
+        if self.filename:
+            filename = self.filename
+        else:
+            filename = DEFAULT_CONFIG_FILENAME
+
+        return filename
 
 
 class VagrantFile(object):
@@ -93,10 +168,9 @@ end
     end
 """
 
-    def __init__(self, domain, box, topology_path, num_replicas=0,
-                 num_clients=0, extra_packages=[],
-                 mem_controller=MEMORY_CONTROLLER, mem_server=MEMORY_SERVER,
-                 mem_client=MEMORY_CLIENT, enforcing=False):
+    def __init__(self, domain, box, topology_path, mem_controller, mem_server,
+                 mem_client, num_replicas=0, num_clients=0, extra_packages=[],
+                 enforcing=False):
         self.domain = domain
         self.box = box
         self.num_replicas = num_replicas
@@ -501,32 +575,56 @@ def main():
                         help="Allows to specify packages that will be "
                              "installed from repository", default=[],
                         metavar="NAME")
-    parser.add_argument('--memory-controller', dest="mem_controller",
-                        help="Allows to specify memory for controller "
-                             "(default %s MB)" % MEMORY_CONTROLLER,
-                        metavar="MBytes", default=MEMORY_CONTROLLER)
-    parser.add_argument('--memory-server', dest="mem_server",
-                        help="Allows to specify memory for server "
-                             "(default %s MB)" % MEMORY_SERVER,
-                        metavar="MBytes", default=MEMORY_SERVER)
-    parser.add_argument('--memory-client', dest="mem_client",
-                        help="Allows to specify memory for client "
-                             "(default %s MB)" % MEMORY_CLIENT,
-                        metavar="MBytes", default=MEMORY_CLIENT)
+    parser.add_argument('--memory-controller', dest="memory_controller",
+                        help="Allows to specify memory for controller [MB]",
+                        metavar="MBytes", default=None)
+    parser.add_argument('--memory-server', dest="memory_server",
+                        help="Allows to specify memory for server [MB]",
+                        metavar="MBytes", default=None)
+    parser.add_argument('--memory-client', dest="memory_client",
+                        help="Allows to specify memory for client [MB]",
+                        metavar="MBytes", default=None)
     parser.add_argument('--selinux-enforce', dest="enforcing",
                         action='store_true', default=False,
                         help="Set SELinux to enforce mode")
     parser.add_argument('--box', dest="box", default=DEFAULT_BOX,
                         help="Set box that will be used (default: %s)" %
                              DEFAULT_BOX)
+    parser.add_argument('--config-file', dest="config_file", default=None,
+                        help="Path to configuration file (default: %s)" %
+                        DEFAULT_CONFIG_FILENAME)
+    parser.add_argument('--export-config', dest="export_config", default=False,
+                        action="store_true", help="export current "
+                        "configuration to config file (destination: "
+                        "--config-file)")
+    parser.add_argument('--show-config', dest="show_config", default=False,
+                        action="store_true", help="show current configuration")
 
     args = parser.parse_args()
 
+    config = IPAVagrantConfig(filename=args.config_file, parser_args=args)
+
+    if args.show_config:
+        print("Current configuration:")
+        keys = sorted(config.config.keys())
+        for key in keys:
+            print("    %s: %r" % (key, config.config[key]))
+        print("Path to used config file: ", config.get_filename())
+        if not args.export_config:
+            return
+
+    if args.export_config:
+        where = config.export_config()
+        print("Configuration saved to %s", where)
+        return
+
+
     topology_path = os.path.abspath(args.topology_name)
     vagrant_file = VagrantFile(
-        args.domain, args.box, topology_path, args.replicas, args.clients,
-        extra_packages=args.packages, mem_controller=args.mem_controller,
-        mem_server=args.mem_server, mem_client=args.mem_client,
+        args.domain, args.box, topology_path,
+        config.memory_controller, config.memory_server,
+        config.memory_client, args.replicas, args.clients,
+        extra_packages=args.packages,
         enforcing=args.enforcing)
 
     create_directories(args.topology_name)
