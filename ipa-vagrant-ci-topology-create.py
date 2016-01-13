@@ -26,6 +26,7 @@ IP_ADDR_FIRST = 100
 
 # please keep ABC order of keys
 DEFAULT_CONFIG = dict(
+    box="f23",
     ci_config_file="ipa-test-config.yaml",
     domain="ipa.test",
     ipa_ci_ad_admin_name="Administrator",
@@ -53,8 +54,6 @@ PACKAGES = [
     "bind-dyndb-ldap"
 ]
 
-
-DEFAULT_BOX = "f23"
 
 box_mapping = {
     "f22": {"libvirt": { "override.vm.box": "f22",
@@ -613,9 +612,8 @@ def main():
     parser.add_argument('--selinux-enforce', dest="enforcing",
                         action='store_true', default=False,
                         help="Set SELinux to enforce mode")
-    parser.add_argument('--box', dest="box", default=DEFAULT_BOX,
-                        help="Set box that will be used (default: %s)" %
-                             DEFAULT_BOX)
+    parser.add_argument('--box', dest="box", default=None,
+                        help="Set box that will be used")
     parser.add_argument('--config-file', dest="config_file", default=None,
                         help="Path to configuration file (default: %s)" %
                         DEFAULT_CONFIG_FILENAME)
@@ -647,7 +645,7 @@ def main():
 
     topology_path = os.path.abspath(args.topology_name)
     vagrant_file = VagrantFile(
-        config.domain, args.box, topology_path,
+        config.domain, config.box, topology_path,
         config.memory_controller, config.memory_server,
         config.memory_client, args.replicas, args.clients,
         extra_packages=args.packages,
