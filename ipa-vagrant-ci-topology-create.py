@@ -27,6 +27,7 @@ IP_ADDR_FIRST = 100
 # please keep ABC order of keys
 DEFAULT_CONFIG = dict(
     ci_config_file="ipa-test-config.yaml",
+    domain="ipa.test",
     ipa_ci_ad_admin_name="Administrator",
     ipa_ci_ad_admin_password="Secret123456",
     ipa_ci_admin_name="admin",
@@ -595,8 +596,7 @@ def main():
                         help="Number of IPA clients to be prepared "
                              "(default: 0)")
     parser.add_argument('--domain', dest="domain", type=str,
-                        default="ipa.test", help="Domain for provisioned VM "
-                                                 "(default: ipa.test)")
+                        default=None, help="Domain for provisioned VM")
     parser.add_argument('--add-package', dest="packages", action="append",
                         help="Allows to specify packages that will be "
                              "installed from repository", default=[],
@@ -647,7 +647,7 @@ def main():
 
     topology_path = os.path.abspath(args.topology_name)
     vagrant_file = VagrantFile(
-        args.domain, args.box, topology_path,
+        config.domain, args.box, topology_path,
         config.memory_controller, config.memory_server,
         config.memory_client, args.replicas, args.clients,
         extra_packages=args.packages,
