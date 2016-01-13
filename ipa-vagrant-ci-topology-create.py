@@ -44,6 +44,8 @@ DEFAULT_CONFIG = dict(
     memory_client=1024,
     memory_controller=1024,
     memory_server=2048,
+    required_copr_repos=[
+        "mkosek/freeipa-master"],
     required_packages=[
         "vim",
         "PyYAML",
@@ -179,7 +181,8 @@ end
 
     def __init__(self, domain, box, topology_path, mem_controller, mem_server,
                  mem_client, num_replicas=0, num_clients=0, extra_packages=[],
-                 enforcing=False, required_packages=[]):
+                 enforcing=False, required_packages=[],
+                 required_copr_repos=[]):
         self.domain = domain
         self.box = box
         self.num_replicas = num_replicas
@@ -191,6 +194,7 @@ end
         self.required_packages = required_packages
         self.topology_path = topology_path
         self.enforcing = enforcing
+        self.required_copr_repos = required_copr_repos
 
         self.network_octets = '192.168.%s' % random.randint(100, 200)
         self.ip_addrs = self._generate_ip_addresses(self.network_octets,
@@ -338,11 +342,20 @@ OvirtConfig[:lab] = {{
         content = [
             "sudo dnf clean all",
             "sudo dnf upgrade dnf* --best --allowerasing -y",  # upgrade dnf to fix it
-            "sudo dnf copr enable mkosek/freeipa-master -y",
-            "sudo dnf config-manager --set-enabled updates-testing",
+            "sudo dnf config-manager --set-enabled updates-testing"
+        ]
+
+        # enable copr repos
+        content.extend([
+            "sudo dnf copr enable {copr} -y".format(copr=copr)
+            for copr in self.required_copr_repos
+        ])
+
+        # upgrade and install local RPMs
+        content.extend([
             "sudo dnf upgrade --best --allowerasing -y",
             '[ "$(ls -A /vagrant/{rpmdir})" ] && sudo dnf install /vagrant/{rpmdir}/*.rpm --best --allowerasing -y'.format(rpmdir=RPMS_DIR),
-        ]
+        ])
 
         packages = self.required_packages + self.extra_packages
         if packages:
@@ -647,7 +660,8 @@ def main():
         config.memory_client, args.replicas, args.clients,
         extra_packages=args.packages,
         enforcing=args.enforcing,
-        required_packages=config.required_packages)
+        required_packages=config.required_packages,
+        required_copr_repos=config.required_copr_repos)
 
     create_directories(args.topology_name)
 
