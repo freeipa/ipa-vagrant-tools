@@ -44,16 +44,12 @@ DEFAULT_CONFIG = dict(
     memory_client=1024,
     memory_controller=1024,
     memory_server=2048,
+    required_packages=[
+        "vim",
+        "PyYAML",
+        "haveged",
+        "bind-dyndb-ldap"],
 )
-
-
-PACKAGES = [
-    "vim",
-    "PyYAML",
-    "haveged",
-    "bind-dyndb-ldap"
-]
-
 
 box_mapping = {
     "f22": {"libvirt": { "override.vm.box": "f22",
@@ -183,7 +179,7 @@ end
 
     def __init__(self, domain, box, topology_path, mem_controller, mem_server,
                  mem_client, num_replicas=0, num_clients=0, extra_packages=[],
-                 enforcing=False):
+                 enforcing=False, required_packages=[]):
         self.domain = domain
         self.box = box
         self.num_replicas = num_replicas
@@ -192,6 +188,7 @@ end
         self.mem_controller = mem_controller
         self.mem_server = mem_server
         self.mem_client = mem_client
+        self.required_packages = required_packages
         self.topology_path = topology_path
         self.enforcing = enforcing
 
@@ -347,7 +344,7 @@ OvirtConfig[:lab] = {{
             '[ "$(ls -A /vagrant/{rpmdir})" ] && sudo dnf install /vagrant/{rpmdir}/*.rpm --best --allowerasing -y'.format(rpmdir=RPMS_DIR),
         ]
 
-        packages = PACKAGES + self.extra_packages
+        packages = self.required_packages + self.extra_packages
         if packages:
             content.append(
                 "sudo dnf install {} --best --allowerasing -y".format(" ".join(packages))
@@ -649,7 +646,8 @@ def main():
         config.memory_controller, config.memory_server,
         config.memory_client, args.replicas, args.clients,
         extra_packages=args.packages,
-        enforcing=args.enforcing)
+        enforcing=args.enforcing,
+        required_packages=config.required_packages)
 
     create_directories(args.topology_name)
 
