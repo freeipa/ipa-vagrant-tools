@@ -181,13 +181,14 @@ end
 
     def __init__(self, domain, box, topology_path, mem_controller, mem_server,
                  mem_client, num_replicas=0, num_clients=0, extra_packages=[],
-                 enforcing=False, required_packages=[],
+                 extra_copr_repos=[], enforcing=False, required_packages=[],
                  required_copr_repos=[]):
         self.domain = domain
         self.box = box
         self.num_replicas = num_replicas
         self.num_clients = num_clients
         self.extra_packages = extra_packages
+        self.extra_copr_repos = extra_copr_repos
         self.mem_controller = mem_controller
         self.mem_server = mem_server
         self.mem_client = mem_client
@@ -348,7 +349,7 @@ OvirtConfig[:lab] = {{
         # enable copr repos
         content.extend([
             "sudo dnf copr enable {copr} -y".format(copr=copr)
-            for copr in self.required_copr_repos
+            for copr in (self.required_copr_repos + self.extra_copr_repos)
         ])
 
         # upgrade and install local RPMs
@@ -610,6 +611,10 @@ def main():
                         help="Allows to specify packages that will be "
                              "installed from repository", default=[],
                         metavar="NAME")
+    parser.add_argument('--add-copr', dest="copr_repos", action="append",
+                        help="Allows to specify copr repositories that will "
+                             "be enabled", default=[],
+                        metavar="NAME")
     parser.add_argument('--memory-controller', dest="memory_controller",
                         help="Allows to specify memory for controller [MB]",
                         metavar="MBytes", default=None)
@@ -659,6 +664,7 @@ def main():
         config.memory_controller, config.memory_server,
         config.memory_client, args.replicas, args.clients,
         extra_packages=args.packages,
+        extra_copr_repos=args.copr_repos,
         enforcing=args.enforcing,
         required_packages=config.required_packages,
         required_copr_repos=config.required_copr_repos)
