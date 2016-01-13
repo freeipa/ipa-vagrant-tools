@@ -639,7 +639,7 @@ def main():
 
     if args.export_config:
         where = config.export_config()
-        print("Configuration saved to %s", where, file=sys.stderr)
+        print("Configuration saved to", where, file=sys.stderr)
         return
 
 
