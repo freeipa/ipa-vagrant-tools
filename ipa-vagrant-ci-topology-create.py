@@ -51,6 +51,7 @@ DEFAULT_CONFIG = dict(
         "PyYAML",
         "haveged",
         "bind-dyndb-ldap"],
+    selinux_enforcing=False,
 )
 
 box_mapping = {
@@ -624,9 +625,16 @@ def main():
     parser.add_argument('--memory-client', dest="memory_client",
                         help="Allows to specify memory for client [MB]",
                         metavar="MBytes", default=None)
-    parser.add_argument('--selinux-enforce', dest="enforcing",
-                        action='store_true', default=False,
+
+    # selinux
+    parser.add_argument('--selinux-enforce', dest="selinux_enforcing",
+                        action='store_true',
                         help="Set SELinux to enforce mode")
+    parser.add_argument('--no-selinux-enforce', dest="selinux_enforcing",
+                        action='store_false',
+                        help="Set SELinux to permissive mode")
+    parser.set_defaults(selinux_enforcing=None)
+
     parser.add_argument('--box', dest="box", default=None,
                         help="Set box that will be used")
     parser.add_argument('--config-file', dest="config_file", default=None,
@@ -665,7 +673,7 @@ def main():
         config.memory_client, args.replicas, args.clients,
         extra_packages=args.packages,
         extra_copr_repos=args.copr_repos,
-        enforcing=args.enforcing,
+        enforcing=config.selinux_enforcing,
         required_packages=config.required_packages,
         required_copr_repos=config.required_copr_repos)
 
