@@ -18,7 +18,7 @@ $ logout
 $ vagrant destroy
 ```
 
-Persistent custom configuration changes can be made by editing configuration yaml file. The configuration file is not created by default, must be exported by using option --export-config for first time.
+Persistent custom configuration changes can be made by editing configuration yaml file. The configuration file is not created by default, must be exported by using option --export-config first.
 
 Exporting configuration:
 ```
