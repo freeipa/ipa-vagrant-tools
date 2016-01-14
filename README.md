@@ -18,5 +18,5 @@ $ logout
 $ vagrant destroy
 ```
 
-## vagrant-up-paralel.sh
+## parallel-vagrant-up.sh
 Not so smart bash script that runs vagrant provisioning in local directory in parallel way.
