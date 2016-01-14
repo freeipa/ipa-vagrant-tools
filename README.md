@@ -12,7 +12,7 @@ $ python3 ipa-vagrant-ci-topology-create.py basic-test --replicas 1 --clients 1 
 $ cd basic-test
 $ vagrant up
 $ vagrant ssh
-$ IPATEST_YAML_CONFIG=/vagrant/ipa-test-config.yaml ipa-run-tests test_integration/test_simple_replication.py --verbose
+$ IPATEST_YAML_CONFIG=/vagrant/ipa-test-config.yaml ipa-run-tests test_integration/test_simple_replication.py --verbose --logging-level=debug --pdb
 <enjoy/>
 $ logout
 $ vagrant destroy
