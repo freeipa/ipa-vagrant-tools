@@ -75,7 +75,15 @@ def main():
 
     args = parser.parse_args()
 
-    config = IPAVagrantConfig(filename=args.config_file, parser_args=args)
+    config = IPAVagrantConfig(
+        filename=args.config_file,
+        domain=args.domain,
+        memory_controller=args.memory_controller,
+        memory_server=args.memory_server,
+        memory_client=args.memory_client,
+        selinux_enforcing=args.selinux_enforcing,
+        box=args.box
+    )
 
     if args.show_config:
         print("Current configuration:")

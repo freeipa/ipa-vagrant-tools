@@ -12,14 +12,13 @@ from .constants import DEFAULT_CONFIG, DEFAULT_CONFIG_FILENAME
 
 class IPAVagrantConfig(object):
 
-    def __init__(self, filename=None, parser_args=None):
+    def __init__(self, filename=None, **options):
         self.filename=filename
         self.config = copy.copy(DEFAULT_CONFIG)
 
         self.load_config_from_file()
 
-        if parser_args:
-            self.__add_parser_args(parser_args)
+        self.__replace_options(options)
 
     def __getattr__(self, item):
         try:
@@ -27,13 +26,13 @@ class IPAVagrantConfig(object):
         except KeyError:
             raise AttributeError()
 
-    def __add_parser_args(self, parser_args):
-        """Check if any of configuration keyword has been passed to parser and
+    def __replace_options(self, options):
+        """Check if any of configuration keyword is in options and
         update configuration.
         """
         for key in self.config.keys():
             try:
-                val = getattr(parser_args, key, None)
+                val = options.get(key, None)
                 if val is not None:
                     self.config[key] = val
             except KeyError:
