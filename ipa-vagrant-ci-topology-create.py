@@ -4,7 +4,6 @@
 
 
 import argparse
-import copy
 import random
 import os
 import sys
@@ -14,45 +13,9 @@ import yaml  # python3-PyYAML
 import pwd
 import time
 
-DEFAULT_CONFIG_FILENAME = os.path.expanduser("~/.ipa_vagrant_config.yaml")
+from ipavagrant import constants
+from ipavagrant.config import IPAVagrantConfig
 
-RPMS_DIR = "rpms"
-PROVISIONING_DIR = "provisioning"
-VAGRANT_FILE = "Vagrantfile"
-ANSIBLE_FILE = "ansible.yml"
-CONTROLLER_SSH_KEY = "controller_rsa"
-CONTROLLER_SSH_PUB_KEY = "controller_rsa.pub"
-IP_ADDR_FIRST = 100
-
-# please keep ABC order of keys
-DEFAULT_CONFIG = dict(
-    box="f23",
-    ci_config_file="ipa-test-config.yaml",
-    domain="ipa.test",
-    ipa_ci_ad_admin_name="Administrator",
-    ipa_ci_ad_admin_password="Secret123456",
-    ipa_ci_admin_name="admin",
-    ipa_ci_admin_password="Secret123",
-    ipa_ci_debug=False,
-    ipa_ci_dirman_dn="cn=Directory Manager",
-    ipa_ci_dirman_password="Secret123",
-    ipa_ci_dns_forwarder="10.34.78.1",
-    ipa_ci_nis_domain="ipatest",
-    ipa_ci_ntp_server="1.pool.ntp.org",
-    ipa_ci_root_ssh_key_filename="/root/.ssh/id_rsa",
-    ipa_ci_test_dir="/root/ipatests",
-    memory_client=1024,
-    memory_controller=1024,
-    memory_server=2048,
-    required_copr_repos=[
-        "mkosek/freeipa-master"],
-    required_packages=[
-        "vim",
-        "PyYAML",
-        "haveged",
-        "bind-dyndb-ldap"],
-    selinux_enforcing=False,
-)
 
 box_mapping = {
     "f22": {"libvirt": { "override.vm.box": "f22",
@@ -68,77 +31,6 @@ box_mapping = {
             "ovirt3": { "domain.template": "ipa-Fedora-22-x86_64-developer-brq", },
     },
 }
-
-
-class IPAVagrantConfig(object):
-
-    def __init__(self, filename=None, parser_args=None):
-        self.filename=filename
-        self.config = copy.copy(DEFAULT_CONFIG)
-
-        self.load_config_from_file()
-
-        if parser_args:
-            self.__add_parser_args(parser_args)
-
-    def __getattr__(self, item):
-        try:
-            return self.config[item]
-        except KeyError:
-            raise AttributeError()
-
-    def __add_parser_args(self, parser_args):
-        """Check if any of configuration keyword has been passed to parser and
-        update configuration.
-        """
-        for key in self.config.keys():
-            try:
-                val = getattr(parser_args, key, None)
-                if val is not None:
-                    self.config[key] = val
-            except KeyError:
-                pass
-
-    def load_config_from_file(self):
-        if self.filename:
-            filename = self.filename
-        else:
-            filename = DEFAULT_CONFIG_FILENAME
-            if not os.path.isfile(filename):
-                return  # do not fail with default config
-
-        with io.open(filename, "r") as f:
-            res = yaml.safe_load(f)
-
-        for key in res.keys():
-            if key not in self.config:
-                # all known options must be there, if not, please add missing
-                # option to DEFAULT_CONFIG variable
-                raise KeyError("Unknown option '{}'".format(key))
-            elif not isinstance(res[key], type(self.config[key])):
-                raise TypeError(
-                    "{key} type: expected {expected}, got {got}".format(
-                        key=key, expected=type(self.config[key]),
-                        got=type(res[key])))
-            else:
-                self.config[key] = res[key]
-
-    def export_config(self):
-        filename = self.get_filename()
-
-        with io.open(filename, "w") as f:
-            yaml.safe_dump(self.config, f, default_flow_style=False)
-            f.flush()
-
-        return filename
-
-    def get_filename(self):
-        if self.filename:
-            filename = self.filename
-        else:
-            filename = DEFAULT_CONFIG_FILENAME
-
-        return filename
 
 
 class VagrantFile(object):
@@ -200,7 +92,7 @@ end
 
         self.network_octets = '192.168.%s' % random.randint(100, 200)
         self.ip_addrs = self._generate_ip_addresses(self.network_octets,
-                                                    IP_ADDR_FIRST)
+                                                    constants.IP_ADDR_FIRST)
 
     def _generate_ip_addresses(self, network_24, start_from):
         i = start_from
@@ -356,7 +248,11 @@ OvirtConfig[:lab] = {{
         # upgrade and install local RPMs
         content.extend([
             "sudo dnf upgrade --best --allowerasing -y",
-            '[ "$(ls -A /vagrant/{rpmdir})" ] && sudo dnf install /vagrant/{rpmdir}/*.rpm --best --allowerasing -y'.format(rpmdir=RPMS_DIR),
+            (
+                '[ "$(ls -A /vagrant/{rpmdir})" ] && '
+                'sudo dnf install /vagrant/{rpmdir}/*.rpm --best '
+                '--allowerasing -y'.format(rpmdir=constants.RPMS_DIR)
+            ),
         ])
 
         packages = self.required_packages + self.extra_packages
@@ -431,13 +327,15 @@ OvirtConfig[:lab] = {{
 
     def _shell_generate_add_controller_key_to_athorized(self):
         content = self._shell_generate_create_root_ssh_dir() + [
-            "sudo cat '/vagrant/{sshpub}' >> /root/.ssh/authorized_keys".format(sshpub=CONTROLLER_SSH_PUB_KEY),
+            "sudo cat '/vagrant/{sshpub}' >> /root/.ssh/authorized_keys".format(
+                sshpub=constants.CONTROLLER_SSH_PUB_KEY),
         ]
         return content
 
     def _shell_generate_cp_controller_key(self):
         content = self._shell_generate_create_root_ssh_dir() + [
-            "sudo cp /vagrant/{sshpriv} /root/.ssh/id_rsa".format(sshpriv=CONTROLLER_SSH_KEY)
+            "sudo cp /vagrant/{sshpriv} /root/.ssh/id_rsa".format(
+                sshpriv=constants.CONTROLLER_SSH_KEY)
         ]
         return content
 
@@ -589,8 +487,8 @@ OvirtConfig[:lab] = {{
 
 def create_directories(parent_name):
     os.mkdir(parent_name)
-    os.mkdir(os.path.join(parent_name, RPMS_DIR))
-    os.mkdir(os.path.join(parent_name, PROVISIONING_DIR))
+    os.mkdir(os.path.join(parent_name, constants.RPMS_DIR))
+    os.mkdir(os.path.join(parent_name, constants.PROVISIONING_DIR))
 
 
 def main():
@@ -639,7 +537,7 @@ def main():
                         help="Set box that will be used")
     parser.add_argument('--config-file', dest="config_file", default=None,
                         help="Path to configuration file (default: %s)" %
-                        DEFAULT_CONFIG_FILENAME)
+                        constants.DEFAULT_CONFIG_FILENAME)
     parser.add_argument('--export-config', dest="export_config", default=False,
                         action="store_true", help="export current "
                         "configuration to config file (destination: "
@@ -682,7 +580,8 @@ def main():
     # generate SSH keys for controller
     command = [
         "ssh-keygen",
-        "-f", str(os.path.join(args.topology_name, CONTROLLER_SSH_KEY)),
+        "-f", str(os.path.join(args.topology_name,
+            constants.CONTROLLER_SSH_KEY)),
         "-P", "",
     ]
     proc = subprocess.Popen(command)
@@ -695,7 +594,7 @@ def main():
         if proc.returncode is not None and proc.returncode != 0:
             raise RuntimeError("Failed to generate SSH key: %s" % errs)
 
-    with io.open(os.path.join(topology_path, VAGRANT_FILE), "w") as f:
+    with io.open(os.path.join(topology_path, constants.VAGRANT_FILE), "w") as f:
         f.write(vagrant_file.generate_vagrant_file())
         f.close()
 
