@@ -2,16 +2,21 @@
 # Author: Martin Basti
 # See LICENSE file for license
 
+import sys
 import os
 import io
+import shutil
+import logging
 import subprocess
+import time
+import paramiko  # python3-paramiko
 
 from . import constants
 from .config import IPAVagrantConfig
-from .vagrant import VagrantFile
+from .vagrant import VagrantFile, VagrantCtl
 
 
-class IPACITopology(object):
+class IPACITopology(VagrantCtl):
     """Class for operations with IPA CI topologies in Vagrant
     """
 
@@ -20,7 +25,7 @@ class IPACITopology(object):
             replicas=0, clients=0,
             packages=[], copr_repos=[]
         ):
-        self.path = path
+        super(IPACITopology, self).__init__(path)
         if config_options is None:
             config_options = {}
         assert isinstance(config_options, dict)
@@ -44,6 +49,9 @@ class IPACITopology(object):
         os.mkdir(self.path)
         os.mkdir(os.path.join(self.path, constants.RPMS_DIR))
         os.mkdir(os.path.join(self.path, constants.PROVISIONING_DIR))
+
+    def get_controller_ip(self):
+        return self.vagrant_file.ip_addrs['controller']['ip']
 
     def create(self):
         self._create_directories()
@@ -83,3 +91,142 @@ class IPACITopology(object):
             self.config.ipa_ci_ntp_server,
             self.config.ipa_ci_root_ssh_key_filename,
             self.config.ipa_ci_test_dir)
+
+
+class RunTest(object):
+    """
+    This allows to configure ssh connection to controller machine and start test.
+    """
+    def __init__(self, test_path, controller_ip, controller_login="vagrant",
+                 controller_passwd="vagrant", port=22):
+
+        self.test_path = test_path
+        self.controller_ip = controller_ip
+        self.controller_login = controller_login
+        self.controller_passwd = controller_passwd
+        self.port = port
+
+    def _print_output(self, session, output_stream=None):
+        # TODO improve receiving output
+        status_ready = False
+        while not status_ready:
+            time.sleep(0.1)
+            status_ready = session.exit_status_ready()
+            while session.recv_ready():
+                data = session.recv(1024)
+                sys.stdout.buffer.write(data)
+                if output_stream:
+                    output_stream.buffer.write(data)
+            while session.recv_stderr_ready():
+                data = session.recv_stderr(1024)
+                sys.stderr.buffer.write(data)
+                if output_stream:
+                    output_stream.buffer.write(data)
+        sys.stdout.flush()
+        sys.stderr.flush()
+
+
+    def run(self, output_stream=None):
+        transport = paramiko.Transport((self.controller_ip, self.port))
+        transport.connect(
+            username=self.controller_login,
+            password=self.controller_passwd
+        )
+
+        session = transport.open_channel("session")
+        cmd = (
+            "sudo "
+            "IPATEST_YAML_CONFIG=/vagrant/ipa-test-config.yaml "
+            "ipa-run-tests --verbose "
+            "{test_path}".format(test_path=self.test_path)
+        )
+        logging.debug("Executing: {}".format(cmd))
+        session.exec_command(cmd)
+
+        self._print_output(session, output_stream)
+        sys.stdout.write("EXIT STATUS: {}\n".format(session.recv_exit_status()))
+        transport.close()
+
+
+class IPACIRunner(object):
+    """Class for executing tests
+    """
+    def __init__(self, tests):
+        assert isinstance(tests, list)
+        self.tests = tests
+        self.topologies = {}
+        self.test_config = constants.DEFAULT_TEST_TOPO_CONFIG['tests']
+        self.topo_config = constants.DEFAULT_TEST_TOPO_CONFIG['topologies']
+
+    def create_topology(self, topology_name):
+        if topology_name in self.topologies:
+            logging.debug("SKIP: Topology '{}' already prepared.".format(
+                topology_name))
+            return self.topologies[topology_name]
+
+        t_config = self.topo_config.get(topology_name)
+        if t_config is None:
+            logging.error("topology {} is not specified in config",
+                topology_name)
+            raise RuntimeError("Missing topology configuration for {}".format(
+                topology_name
+            ))
+
+        path = os.path.abspath(topology_name)
+        # load all config options that are allowed by DEFAULT_CONFIG
+        config_options = {key: val for key, val in t_config.items()
+            if key in constants.DEFAULT_CONFIG}
+
+        topo = IPACITopology(
+            path,
+            config_file=t_config.get('config_file'),
+            replicas=t_config.get('replicas', 0),
+            clients=t_config.get('clients', 0),
+            copr_repos=t_config.get('copr_repos', []),
+            packages=t_config.get('packages', []),
+            config_options=config_options
+        )
+        self.topologies[topology_name] = topo
+
+        logging.debug("Creating topology {}".format(topology_name))
+        topo.create()
+        logging.info("Starting topology {}, this may take long time, please "
+                     "wait".format(topology_name))
+        output_file = "vagrant_up_{}.log".format(topology_name)
+        with io.open(output_file, "w") as f:
+            # log output to file
+            topo.up(output_stream=f)  # start VM
+
+        return topo
+
+    def cleanup(self):
+        for name, topo in self.topologies.items():
+            output_file = "vagrant_destroy_{}.log".format(name)
+            with io.open(output_file, "w") as f:
+                topo.destroy(output_stream=f)
+            shutil.rmtree(topo.path)
+
+    def run(self):
+        for test in self.tests:
+            if test not in self.test_config:
+                raise RuntimeError("Test {} is not configured".format(test))
+
+            t_config = self.test_config.get(test)
+            if 'path' not in t_config:
+                raise RuntimeError(
+                    "Test {} doesn't have configured path".format(test))
+
+            test_path = t_config['path']
+            topology_name = t_config.get('topology', '_default_')
+
+            topology = self.create_topology(topology_name)
+
+            ip = topology.get_controller_ip()
+
+            r = RunTest(test_path, ip)
+
+            output_file = "test_{}.log".format(test)
+            with io.open(output_file, "w") as f:
+                r.run(output_stream=f)
+
+        self.cleanup()

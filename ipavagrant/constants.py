@@ -59,3 +59,41 @@ box_mapping = {
             "ovirt3": { "domain.template": "ipa-Fedora-23-x86_64-developer-brq", },
     },
 }
+
+
+DEFAULT_TEST_TOPO_CONFIG = {
+    'tests': {
+        'simple_replication': {
+            'path': 'test_integration/test_simple_replication.py',
+            # _default_ topology will be used
+        },
+        'dnssec': {
+            'path': 'test_integration/dnssec.py',
+            'topology': 'master_2replicas',
+        }
+    },
+    'topologies': {
+        # supported keywords
+        # 'topo_name': {
+        #     'replicas': 1,
+        #     'clients': 2,
+        #     'box': 'f23',
+        #     'memory_controller': 1024,
+        #     'memory_server': 1024,
+        #     'memory_client': 1024,
+        #     'domain': 'ipa.test',
+        #     'copr_repos': ['repo1', 'repo2'],
+        #     'packages': ['pkg1', 'pkg2'],
+        #     'config_file': '/path/to/config',  # otherwise default configuration will be used
+        # AND any option from DEFAULT_CONFIG
+        # }
+
+        '_default_': {
+            'replicas': 1,
+            'packages': ['freeipa-server', 'freeipa-server-dns', 'freeipa-tests'],
+        },
+        'master_2replicas': {
+            'replicas': 2,
+        },
+    },
+}

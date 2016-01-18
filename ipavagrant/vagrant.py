@@ -8,6 +8,7 @@ import io
 import yaml  # python3-PyYAML
 import pwd
 import time
+import subprocess
 
 from . import constants
 
@@ -462,3 +463,39 @@ OvirtConfig[:lab] = {{
             yaml.safe_dump(config, f, default_flow_style=False)
             f.flush()
             f.close()
+
+
+class VagrantCtl(object):
+    """Class for Vagrant controls: starting,halting destroying, etc..
+    """
+    # TODO python-vagrant?
+
+    def __init__(self, path):
+        self.path = path
+
+    def up(self, output_stream=None):
+        p = subprocess.Popen(
+            ['vagrant', 'up'],
+            cwd=self.path,
+            stderr=output_stream,
+            stdout=output_stream
+        )
+        p.wait()
+
+    def halt(self, output_stream=None):
+        p = subprocess.Popen(
+            ['vagrant', 'halt'],
+            cwd=self.path,
+            stderr=output_stream,
+            stdout=output_stream
+        )
+        p.wait()
+
+    def destroy(self, output_stream=None):
+        p = subprocess.Popen(
+            ['vagrant', 'destroy'],
+            cwd=self.path,
+            stderr=output_stream,
+            stdout=output_stream
+        )
+        p.wait()
