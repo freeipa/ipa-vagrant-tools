@@ -11,4 +11,5 @@ setup(name='ipa-vagrant-devel-tools',
       author_email='martin.basti@gmail.com',
       url='https://github.com/bastiak/ipa-devel-tools',
       packages=['ipavagrant'],
+      scripts=['ipa-vagrant-ci-runner', 'ipa-vagrant-ci-topology-create']
      )
