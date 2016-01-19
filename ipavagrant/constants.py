@@ -8,6 +8,8 @@ import os
 DEFAULT_CONFIG_FILENAME = os.path.expanduser("~/.ipa_vagrant_config.yaml")
 
 RPMS_DIR = "rpms"
+LOGS_DIR = "logs"
+IPA_RUNNER_INIT_FILE = ".runner_init.yaml"
 PROVISIONING_DIR = "provisioning"
 VAGRANT_FILE = "Vagrantfile"
 ANSIBLE_FILE = "ansible.yml"

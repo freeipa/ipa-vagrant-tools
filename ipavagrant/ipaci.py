@@ -158,6 +158,10 @@ class IPACIRunner(object):
         self.test_config = constants.DEFAULT_TEST_TOPO_CONFIG['tests']
         self.topo_config = constants.DEFAULT_TEST_TOPO_CONFIG['topologies']
 
+        # init file is used to store internal information about VM, config, etc..
+        self.init_file = os.path.abspath(constants.IPA_RUNNER_INIT_FILE)
+        self.rpm_dir = os.path.abspath(constants.RPMS_DIR)
+
     def create_topology(self, topology_name):
         if topology_name in self.topologies:
             logging.debug("SKIP: Topology '{}' already prepared.".format(
@@ -193,6 +197,14 @@ class IPACIRunner(object):
         logging.info("Starting topology {}, this may take long time, please "
                      "wait".format(topology_name))
         output_file = "vagrant_up_{}.log".format(topology_name)
+
+        # copy custom RPMs to topology
+        rpm_files = os.listdir(self.rpm_dir)
+        dst = os.path.join(path, constants.RPMS_DIR)
+        for fname in rpm_files:
+            src = os.path.abspath(os.path.join(self.rpm_dir, fname))
+            shutil.copy(src, dst)
+
         with io.open(output_file, "w") as f:
             # log output to file
             topo.up(output_stream=f)  # start VM
@@ -206,7 +218,25 @@ class IPACIRunner(object):
                 topo.destroy(output_stream=f)
             shutil.rmtree(topo.path)
 
+    def is_initialized(self):
+        return os.path.isfile(self.init_file) and os.path.isdir(self.rpm_dir)
+
+    def initialize(self):
+        if self.is_initialized():
+            raise RuntimeError("IPA CI runner has been already initialized "
+                               "in current directory.")
+
+        with io.open(self.init_file, "w") as f:
+            f.write("# IPA CI runner init file\n")
+
+        if not os.path.isdir(self.rpm_dir):
+            os.mkdir(self.rpm_dir)
+
     def run(self):
+        if not self.is_initialized():
+            raise RuntimeError("IPA CI runner must be initialized in current "
+                               "directory")
+
         for test in self.tests:
             if test not in self.test_config:
                 raise RuntimeError("Test {} is not configured".format(test))

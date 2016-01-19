@@ -4,13 +4,18 @@
 
 import argparse
 import logging
+import sys
 
 from ipavagrant.ipaci import IPACIRunner
 
 def main():
     parser = argparse.ArgumentParser(description="")
     parser.add_argument("test_name", type=str, action="append",
-                        help="Name of CI test(s) to be executed")
+                        help="Name of CI test(s) to be executed",
+                        default=[])
+    parser.add_argument("--init", action="store_true", default=False,
+                        dest="initialize",
+                        help="Initialize IPA CI runner in current directory")
     # parser.add_argument("--ip-address", dest="ip_address", type=str,
     #                     metavar="IPADDR", required=True,
     #                     help="the ip address of the controller")
@@ -25,6 +30,25 @@ def main():
     logging.basicConfig(level=logging.INFO)
 
     runner = IPACIRunner(args.test_name)
+
+    if args.initialize:
+        if runner.is_initialized():
+            print("Already initialized", file=sys.stderr)
+            sys.exit(1)
+        else:
+            runner.initialize()
+            print("Initialization done", file=sys.stderr)
+            sys.exit(0)
+
+    if not runner.is_initialized():
+        print("IPA CI runner must be initialized first in current directory. "
+              "Please use option '--init'")
+        sys.exit(1)
+
+    if not args.test_name:
+        print("No tests have been specified", file=sys.stderr)
+        sys.exit(1)
+
     runner.run()
 
 if __name__ == "__main__":
