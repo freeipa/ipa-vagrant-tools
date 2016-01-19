@@ -16,6 +16,9 @@ def main():
     parser.add_argument("--init", action="store_true", default=False,
                         dest="initialize",
                         help="Initialize IPA CI runner in current directory")
+    parser.add_argument("--debug", action="store_true", default=False,
+                        dest="debug",
+                        help="Enables DEBUG level logging")
     # parser.add_argument("--ip-address", dest="ip_address", type=str,
     #                     metavar="IPADDR", required=True,
     #                     help="the ip address of the controller")
@@ -27,7 +30,10 @@ def main():
     #                     "to connect to controller (default: vagrant)")
     args = parser.parse_args()
 
-    logging.basicConfig(level=logging.INFO)
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
 
     runner = IPACIRunner(args.test_name)
 

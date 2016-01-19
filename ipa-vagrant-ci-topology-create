@@ -6,6 +6,7 @@
 import argparse
 import os
 import sys
+import logging
 
 from ipavagrant import constants
 from ipavagrant.ipaci import IPACITopology
@@ -64,8 +65,16 @@ def main():
                         "--config-file)")
     parser.add_argument('--show-config', dest="show_config", default=False,
                         action="store_true", help="show current configuration")
+    parser.add_argument("--debug", action="store_true", default=False,
+                        dest='debug',
+                        help="Enables DEBUG level logging")
 
     args = parser.parse_args()
+
+    if args.debug:
+        logging.basicConfig(level=logging.DEBUG)
+    else:
+        logging.basicConfig(level=logging.INFO)
 
     topology_path = os.path.abspath(args.topology_name)
 
