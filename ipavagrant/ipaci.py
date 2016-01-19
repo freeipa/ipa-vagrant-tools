@@ -46,6 +46,8 @@ class IPACITopology(VagrantCtl):
             required_copr_repos=self.config.required_copr_repos)
 
     def _create_directories(self):
+        logging.debug("Creating directory structure for '{}' topology".format(
+            os.path.basename(self.path)))
         os.mkdir(self.path)
         os.mkdir(os.path.join(self.path, constants.RPMS_DIR))
         os.mkdir(os.path.join(self.path, constants.PROVISIONING_DIR))
@@ -54,6 +56,9 @@ class IPACITopology(VagrantCtl):
         return self.vagrant_file.ip_addrs['controller']['ip']
 
     def create(self):
+        logging.info("Preparing '{}' topology".format(
+            os.path.basename(self.path)))
+
         self._create_directories()
 
         # generate SSH keys for controller
@@ -63,6 +68,8 @@ class IPACITopology(VagrantCtl):
                 constants.CONTROLLER_SSH_KEY)),
             "-P", "",
         ]
+        logging.debug("Generate SSH keys for '{}' topology".format(
+            os.path.basename(self.path)))
         proc = subprocess.Popen(command)
         try:
             outs, errs = proc.communicate(timeout=15)
