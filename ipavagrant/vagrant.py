@@ -53,9 +53,9 @@ end
 """
 
     def __init__(self, domain, box, topology_path, mem_controller, mem_server,
-                 mem_client, num_replicas=0, num_clients=0, extra_packages=[],
-                 extra_copr_repos=[], enforcing=False, required_packages=[],
-                 required_copr_repos=[]):
+                 mem_client, num_replicas=0, num_clients=0, extra_packages=(),
+                 extra_copr_repos=(), enforcing=False, required_packages=(),
+                 required_copr_repos=()):
         self.domain = domain
         self.box = box
         self.num_replicas = num_replicas

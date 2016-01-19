@@ -23,7 +23,7 @@ class IPACITopology(VagrantCtl):
     def __init__(
             self, path, config_file=None, config_options=None,
             replicas=0, clients=0,
-            packages=[], copr_repos=[]
+            packages=(), copr_repos=()
         ):
         super(IPACITopology, self).__init__(path)
         if config_options is None:
