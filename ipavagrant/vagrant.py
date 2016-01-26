@@ -293,6 +293,7 @@ OvirtConfig[:lab] = {{
 
     def _shell_generate_enable_haveged(self):
         config = [
+            "sudo dnf install haveged -y",
             "sudo systemctl start haveged",
             "sudo systemctl enable haveged",
         ]
@@ -330,9 +331,9 @@ OvirtConfig[:lab] = {{
         shell_basic_conf = []
         shell_basic_conf.extend(self._shell_generate_setenforce())
         shell_basic_conf.extend(self._shell_generate_install_basic_pkgs())
+        shell_basic_conf.extend(self._shell_generate_enable_haveged())
         shell_basic_conf.extend(self._shell_generate_hosts_file())
         shell_basic_conf.extend(self._shell_generate_resolv_file())
-        shell_basic_conf.extend(self._shell_generate_enable_haveged())
 
         controller = self.BOX_TEMPLATE.format(
             conf_name="controller",

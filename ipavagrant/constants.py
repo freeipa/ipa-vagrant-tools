@@ -42,7 +42,6 @@ DEFAULT_CONFIG = dict(
     required_packages=[
         "vim",
         "PyYAML",
-        "haveged",
         "bind-dyndb-ldap"],
     selinux_enforcing=False,
 )
