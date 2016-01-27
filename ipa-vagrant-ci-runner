@@ -10,9 +10,9 @@ from ipavagrant.ipaci import IPACIRunner
 
 def main():
     parser = argparse.ArgumentParser(description="")
-    parser.add_argument("test_name", type=str, action="append",
+    parser.add_argument("test_name", type=str,
                         help="Name of CI test(s) to be executed",
-                        default=[])
+                        nargs='*')
     parser.add_argument("--init", action="store_true", default=False,
                         dest="initialize",
                         help="Initialize IPA CI runner in current directory")

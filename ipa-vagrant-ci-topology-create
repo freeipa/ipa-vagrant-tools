@@ -16,7 +16,8 @@ def main():
     parser = argparse.ArgumentParser(description="")
     parser.add_argument("topology_name", type=str,
                         help="Name for topology (directory with this name "
-                             "will be created)")
+                             "will be created)",
+                        nargs="?")
     parser.add_argument("--replicas", dest="replicas", type=int, default=0,
                         metavar="INT",
                         help="Number of IPA replicas to be prepared "
@@ -75,8 +76,13 @@ def main():
         logging.basicConfig(level=logging.DEBUG)
     else:
         logging.basicConfig(level=logging.INFO)
-
-    topology_path = os.path.abspath(args.topology_name)
+    if not args.topology_name:
+        if args.show_config or args.export_config:
+            topology_path = "_unused_"
+        else:
+            raise RuntimeError("Topology name is required")
+    else:
+        topology_path = os.path.abspath(args.topology_name)
 
     ci_topo = IPACITopology(
         topology_path,
