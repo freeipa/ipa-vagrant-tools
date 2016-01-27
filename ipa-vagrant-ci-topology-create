@@ -7,6 +7,7 @@ import argparse
 import os
 import sys
 import logging
+import traceback
 
 from ipavagrant import constants
 from ipavagrant.ipaci import IPACITopology
@@ -122,6 +123,7 @@ if __name__ == '__main__':
     try:
         main()
     except RuntimeError as e:
+        logging.debug(traceback.format_exc())
         print(e, file=sys.stderr)
         sys.exit(2)
 

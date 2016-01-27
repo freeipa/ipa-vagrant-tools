@@ -5,6 +5,7 @@
 import argparse
 import logging
 import sys
+import traceback
 
 from ipavagrant.ipaci import IPACIRunner
 
@@ -39,23 +40,25 @@ def main():
 
     if args.initialize:
         if runner.is_initialized():
-            print("Already initialized", file=sys.stderr)
-            sys.exit(1)
+            raise RuntimeError("Already initialized")
         else:
             runner.initialize()
             print("Initialization done", file=sys.stderr)
             sys.exit(0)
 
     if not runner.is_initialized():
-        print("IPA CI runner must be initialized first in current directory. "
-              "Please use option '--init'")
-        sys.exit(1)
+        raise RuntimeError("IPA CI runner must be initialized first in "
+                           "current directory. Please use option '--init'")
 
     if not args.test_name:
-        print("No tests have been specified", file=sys.stderr)
-        sys.exit(1)
+        RuntimeError("No tests have been specified")
 
     runner.run()
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except RuntimeError as e:
+        logging.debug(traceback.format_exc())
+        print(e, file=sys.stderr)
+        sys.exit(2)
