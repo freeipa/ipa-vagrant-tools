@@ -70,9 +70,12 @@ class IPACITopology(VagrantCtl):
         ]
         logging.debug("Generate SSH keys for '{}' topology".format(
             os.path.basename(self.path)))
-        proc = subprocess.Popen(command)
+        proc = subprocess.Popen(command,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         try:
             outs, errs = proc.communicate(timeout=15)
+            logging.debug("Keygen stdout:\n" + outs)
+            logging.debug("Keygen stderr:\n" + errs)
         except subprocess.TimeoutExpired:
             proc.kill()
             raise RuntimeError("Timeout during generating SSH keys")

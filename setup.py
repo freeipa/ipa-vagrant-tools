@@ -2,7 +2,7 @@
 # Author: Martin Basti
 # See LICENSE file for license
 
-from distutils.core import setup
+from setuptools import setup
 
 setup(name='ipa-vagrant-devel-tools',
       version='0.3',
@@ -11,5 +11,6 @@ setup(name='ipa-vagrant-devel-tools',
       author_email='martin.basti@gmail.com',
       url='https://github.com/bastiak/ipa-devel-tools',
       packages=['ipavagrant'],
-      scripts=['ipa-vagrant-ci-runner', 'ipa-vagrant-ci-topology-create']
+      scripts=['ipa-vagrant-ci-runner', 'ipa-vagrant-ci-topology-create'],
+      install_requires=['PyYAML', 'paramiko'],
      )
