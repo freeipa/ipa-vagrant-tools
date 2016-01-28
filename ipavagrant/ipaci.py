@@ -8,7 +8,7 @@ import io
 import shutil
 import logging
 import subprocess
-import time
+import select
 import paramiko  # python3-paramiko
 
 from . import constants
@@ -114,24 +114,29 @@ class RunTest(object):
         self.port = port
 
     def _print_output(self, session, output_stream=None):
-        # TODO improve receiving output
-        status_ready = False
-        while not status_ready:
-            time.sleep(0.1)
-            status_ready = session.exit_status_ready()
-            while session.recv_ready():
-                data = session.recv(1024)
-                sys.stdout.buffer.write(data)
-                if output_stream:
-                    output_stream.buffer.write(data)
-            while session.recv_stderr_ready():
-                data = session.recv_stderr(1024)
-                sys.stderr.buffer.write(data)
-                if output_stream:
-                    output_stream.buffer.write(data)
-        sys.stdout.flush()
-        sys.stderr.flush()
+        while True:
+            r, w, x = select.select([session, sys.stdin], [], [], 1.0)
+            if session in r:
+                while session.recv_ready():
+                    data = session.recv(1)
+                    sys.stdout.buffer.write(data)
+                    if output_stream:
+                        output_stream.buffer.write(data)
+                sys.stdout.flush()
+                while session.recv_stderr_ready():
+                    data = session.recv_stderr(1)
+                    sys.stderr.buffer.write(data)
+                    if output_stream:
+                        output_stream.buffer.write(data)
+                sys.stderr.flush()
+            if sys.stdin in r:
+                # TODO sending data doesnt work very well
+                if session.send_ready():
+                    session.send(sys.stdin.read(1))
 
+            if session not in r and session.exit_status_ready():
+                # no pending data and process finished
+                break
 
     def run(self, output_stream=None):
         transport = paramiko.Transport((self.controller_ip, self.port))
@@ -147,11 +152,11 @@ class RunTest(object):
             "ipa-run-tests --verbose "
             "{test_path}".format(test_path=self.test_path)
         )
-        logging.debug("Executing: {}".format(cmd))
+        logging.info("Executing: {}".format(cmd))
         session.exec_command(cmd)
 
         self._print_output(session, output_stream)
-        sys.stdout.write("EXIT STATUS: {}\n".format(session.recv_exit_status()))
+        logging.info("EXIT STATUS: {}\n".format(session.recv_exit_status()))
         transport.close()
 
 
