@@ -4,11 +4,13 @@
 
 import random
 import os
+import sys
 import io
 import yaml  # python3-PyYAML
 import pwd
 import time
 import subprocess
+import logging
 
 from . import constants
 
@@ -500,3 +502,27 @@ class VagrantCtl(object):
             stdout=output_stream
         )
         p.wait()
+
+    def get_ssh_config(self):
+        p = subprocess.Popen(
+            ['vagrant', 'ssh-config'],
+            cwd=self.path,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        try:
+            outs, errs = p.communicate(timeout=15)
+        except subprocess.TimeoutExpired:
+            p.kill()
+            raise RuntimeError("Timeout during 'vagrant ssh-config'")
+        else:
+            if p.returncode is not None and p.returncode != 0:
+                raise RuntimeError("Failed 'vagrant ssh-config': %s" %
+                                   errs.decode(sys.stderr.encoding))
+
+            if errs:
+                logging.error(errs.decode(sys.stderr.encoding))
+
+            logging.debug("vagrant ssh-config:\n" + outs.decode(
+                sys.stdout.encoding))
+            return outs.decode(sys.stdout.encoding)

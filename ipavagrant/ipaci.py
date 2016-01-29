@@ -52,9 +52,6 @@ class IPACITopology(VagrantCtl):
         os.mkdir(os.path.join(self.path, constants.RPMS_DIR))
         os.mkdir(os.path.join(self.path, constants.PROVISIONING_DIR))
 
-    def get_controller_ip(self):
-        return self.vagrant_file.ip_addrs['controller']['ip']
-
     def create(self):
         logging.info("Preparing '{}' topology".format(
             os.path.basename(self.path)))
@@ -107,14 +104,13 @@ class RunTest(object):
     """
     This allows to configure ssh connection to controller machine and start test.
     """
-    def __init__(self, test_path, controller_ip, controller_login="vagrant",
-                 controller_passwd="vagrant", port=22):
+    def __init__(self, test_path, ssh_config):
 
         self.test_path = test_path
-        self.controller_ip = controller_ip
-        self.controller_login = controller_login
-        self.controller_passwd = controller_passwd
-        self.port = port
+        self.controller_hostname = ssh_config['hostname']
+        self.controller_username = ssh_config['user']
+        self.controller_key_file = ssh_config['identityfile']
+        self.controller_port = int(ssh_config['port'])
 
     def _print_output(self, session, output_stream=None):
         while True:
@@ -142,25 +138,32 @@ class RunTest(object):
                 break
 
     def run(self, output_stream=None):
-        transport = paramiko.Transport((self.controller_ip, self.port))
-        transport.connect(
-            username=self.controller_login,
-            password=self.controller_passwd
-        )
 
-        session = transport.open_channel("session")
-        cmd = (
-            "sudo "
-            "IPATEST_YAML_CONFIG=/vagrant/ipa-test-config.yaml "
-            "ipa-run-tests --verbose "
-            "{test_path}".format(test_path=self.test_path)
-        )
-        logging.info("Executing: {}".format(cmd))
-        session.exec_command(cmd)
+        ssh_client = paramiko.SSHClient()
+        ssh_client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        ssh_client.connect(
+            self.controller_hostname,
+            port=self.controller_port,
+            username=self.controller_username,
+            key_filename=self.controller_key_file)
 
-        self._print_output(session, output_stream)
-        logging.info("EXIT STATUS: {}\n".format(session.recv_exit_status()))
-        transport.close()
+        try:
+            transport = ssh_client.get_transport()
+
+            session = transport.open_channel("session")
+            cmd = (
+                "sudo "
+                "IPATEST_YAML_CONFIG=/vagrant/ipa-test-config.yaml "
+                "ipa-run-tests --verbose "
+                "{test_path}".format(test_path=self.test_path)
+            )
+            logging.info("Executing: {}".format(cmd))
+            session.exec_command(cmd)
+
+            self._print_output(session, output_stream)
+            logging.info("EXIT STATUS: {}\n".format(session.recv_exit_status()))
+        finally:
+            ssh_client.close()
 
 
 class IPACIRunner(object):
@@ -206,6 +209,11 @@ class IPACIRunner(object):
             config_options=config_options
         )
         self.topologies[topology_name] = topo
+
+        if os.path.exists(path):
+            logging.warning("Topology '%s' already exists, skipping topology "
+                            "creation", topology_name)
+            return topo
 
         logging.debug("Creating topology {}".format(topology_name))
         topo.create()
@@ -266,9 +274,10 @@ class IPACIRunner(object):
 
             topology = self.create_topology(topology_name)
 
-            ip = topology.get_controller_ip()
+            ssh_config = paramiko.SSHConfig()
+            ssh_config.parse(io.StringIO(topology.get_ssh_config()))
 
-            r = RunTest(test_path, ip)
+            r = RunTest(test_path, ssh_config.lookup('controller'))
 
             output_file = "test_{}.log".format(test)
             with io.open(output_file, "w") as f:
