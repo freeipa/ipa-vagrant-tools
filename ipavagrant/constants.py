@@ -18,6 +18,8 @@ CONTROLLER_SSH_KEY = "controller_rsa"
 CONTROLLER_SSH_PUB_KEY = "controller_rsa.pub"
 IP_ADDR_FIRST = 100
 
+AUTO_DOMAIN_LEVEL = -1
+
 # please keep ABC order of keys
 DEFAULT_CONFIG = dict(
     box="f23",
@@ -35,6 +37,7 @@ DEFAULT_CONFIG = dict(
     ipa_ci_ntp_server="1.pool.ntp.org",
     ipa_ci_root_ssh_key_filename="/root/.ssh/id_rsa",
     ipa_ci_test_dir="/root/ipatests",
+    ipa_ci_domain_level=AUTO_DOMAIN_LEVEL,
     memory_client=1024,
     memory_controller=1024,
     memory_server=2048,

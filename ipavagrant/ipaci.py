@@ -97,7 +97,9 @@ class IPACITopology(VagrantCtl):
             self.config.ipa_ci_nis_domain,
             self.config.ipa_ci_ntp_server,
             self.config.ipa_ci_root_ssh_key_filename,
-            self.config.ipa_ci_test_dir)
+            self.config.ipa_ci_test_dir,
+            self.config.ipa_ci_domain_level
+        )
 
 
 class RunTest(object):

@@ -421,7 +421,8 @@ OvirtConfig[:lab] = {{
                               nis_domain,
                               ntp_server,
                               root_ssh_key_filename,
-                              test_dir):
+                              test_dir,
+                              domain_level):
         config = dict()
         config['ad_admin_name'] = ad_admin_name
         config['ad_admin_password'] = ad_admin_password
@@ -435,6 +436,8 @@ OvirtConfig[:lab] = {{
         config['ntp_server'] = ntp_server
         config['root_ssh_key_filename'] = root_ssh_key_filename
         config['test_dir'] = test_dir
+        if domain_level != constants.AUTO_DOMAIN_LEVEL:
+            config['domain_level'] = domain_level
 
         hosts = []
         master = {
