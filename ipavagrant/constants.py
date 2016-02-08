@@ -68,15 +68,56 @@ box_mapping = {
 
 DEFAULT_TEST_TOPO_CONFIG = {
     'tests': {
-        'simple_replication': {
-            'path': 'test_integration/test_simple_replication.py',
-            # _default_ topology will be used
+        'backup_and_restore': {
+            'path': 'test_integration/test_backup_and_restore.py',
+            'topology': 'master_only',
+        },
+        'backup_and_restore_dom0': {
+            'path': 'test_integration/test_backup_and_restore.py',
+            'topology': 'master_only_dom0',
         },
         'dnssec': {
             'path': 'test_integration/dnssec.py',
             'topology': 'master_2replicas',
-        }
+        },
+        'dnssec_dom0': {
+            'path': 'test_integration/dnssec.py',
+            'topology': 'master_2replicas_dom0',
+        },
+        'installation': {
+            'path': 'test_integration/test_installation.py',
+            'topology': 'master_3replicas',
+        },
+        'installation_dom0': {
+            'path': 'test_integration/test_installation.py',
+            'topology': 'master_3replicas_dom0',
+        },
+        'replication_layouts': {
+            'path': 'test_integration/test_replication_layouts.py',
+            'topology': 'master_3replicas',
+        },
+        'replication_layouts_dom0': {
+            'path': 'test_integration/test_replication_layouts.py',
+            'topology': 'master_3replicas_dom0',
+        },
+        'simple_replication': {
+            'path': 'test_integration/test_simple_replication.py',
+            'topology': 'master_2replicas',
+        },
+        'simple_replication_dom0': {
+            'path': 'test_integration/test_simple_replication.py',
+            'topology': 'master_2replicas_dom0',
+        },
+        'topology': {
+            'path': 'test_integration/test_topology.py',
+            'topology': 'master_2replicas',
+        },
+        'topology_dom0': {
+            'path': 'test_integration/test_topology.py',
+            'topology': 'master_2replicas_dom0',
+        },
     },
+
     'topologies': {
         # supported keywords
         # 'topo_name': {
@@ -97,8 +138,31 @@ DEFAULT_TEST_TOPO_CONFIG = {
             'replicas': 1,
             'packages': ['freeipa-server', 'freeipa-server-dns', 'freeipa-tests'],
         },
+        'master_only': {
+        },
+        'master_only_dom0': {
+            'ipa_ci_domain_level': 0,
+        },
+        'master_replica': {
+            'replicas': 1,
+        },
+        'master_replica_dom0': {
+            'replicas': 1,
+            'ipa_ci_domain_level': 0,
+        },
         'master_2replicas': {
             'replicas': 2,
+        },
+        'master_2replicas_dom0': {
+            'replicas': 2,
+            'ipa_ci_domain_level': 0,
+        },
+        'master_3replicas': {
+            'replicas': 3,
+        },
+        'master_3replicas_dom0': {
+            'replicas': 3,
+            'ipa_ci_domain_level': 0,
         },
     },
 }
