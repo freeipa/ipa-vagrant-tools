@@ -113,8 +113,9 @@ class RunTest(object):
         self.controller_port = int(ssh_config['port'])
 
     def _print_output(self, session, output_stream=None):
+        end = False
         while True:
-            r, w, x = select.select([session, sys.stdin], [], [], 1.0)
+            r, w, x = select.select([session], [], [], 1.0)
             if session in r:
                 while session.recv_ready():
                     data = session.recv(1)
@@ -128,14 +129,16 @@ class RunTest(object):
                     if output_stream:
                         output_stream.buffer.write(data)
                 sys.stderr.flush()
-            if sys.stdin in r:
-                # TODO sending data doesnt work very well
-                if session.send_ready():
-                    session.send(sys.stdin.read(1))
+#            if sys.stdin in r:
+#                # TODO sending data doesnt work very well
+#                if session.send_ready():
+#                    session.send(sys.stdin.read(1))
 
-            if session not in r and session.exit_status_ready():
-                # no pending data and process finished
+            if end:
                 break
+
+            if session.exit_status_ready():
+                end = True  # get all remaining data before break
 
     def run(self, output_stream=None):
 
