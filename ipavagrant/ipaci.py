@@ -12,7 +12,7 @@ import select
 import paramiko  # python3-paramiko
 
 from . import constants
-from .config import IPAVagrantConfig
+from .config import IPAVagrantConfig, IPATopoConfig
 from .vagrant import VagrantFile, VagrantCtl
 
 
@@ -169,24 +169,24 @@ class RunTest(object):
 class IPACIRunner(object):
     """Class for executing tests
     """
-    def __init__(self, tests):
+    def __init__(self, tests, config_topo_file=None):
         assert isinstance(tests, list)
         self.tests = tests
-        self.topologies = {}
-        self.test_config = constants.DEFAULT_TEST_TOPO_CONFIG['tests']
-        self.topo_config = constants.DEFAULT_TEST_TOPO_CONFIG['topologies']
+        self.topologies_ready = {}
+
+        self.topo_config = IPATopoConfig(filename=config_topo_file)
 
         # init file is used to store internal information about VM, config, etc..
         self.init_file = os.path.abspath(constants.IPA_RUNNER_INIT_FILE)
         self.rpm_dir = os.path.abspath(constants.RPMS_DIR)
 
     def create_topology(self, topology_name):
-        if topology_name in self.topologies:
+        if topology_name in self.topologies_ready:
             logging.debug("SKIP: Topology '{}' already prepared.".format(
                 topology_name))
-            return self.topologies[topology_name]
+            return self.topologies_ready[topology_name]
 
-        t_config = self.topo_config.get(topology_name)
+        t_config = self.topo_config.topologies.get(topology_name)
         if t_config is None:
             logging.error("topology {} is not specified in config",
                 topology_name)
@@ -208,7 +208,7 @@ class IPACIRunner(object):
             packages=t_config.get('packages', []),
             config_options=config_options
         )
-        self.topologies[topology_name] = topo
+        self.topologies_ready[topology_name] = topo
 
         if os.path.exists(path):
             logging.warning("Topology '%s' already exists, skipping topology "
@@ -235,7 +235,7 @@ class IPACIRunner(object):
         return topo
 
     def cleanup(self):
-        for name, topo in self.topologies.items():
+        for name, topo in self.topologies_ready.items():
             output_file = "vagrant_destroy_{}.log".format(name)
             with io.open(output_file, "w") as f:
                 topo.destroy(output_stream=f)
@@ -261,10 +261,10 @@ class IPACIRunner(object):
                                "directory")
 
         for test in self.tests:
-            if test not in self.test_config:
+            if test not in self.topo_config.tests:
                 raise RuntimeError("Test {} is not configured".format(test))
 
-            t_config = self.test_config.get(test)
+            t_config = self.topo_config.tests.get(test)
             if 'path' not in t_config:
                 raise RuntimeError(
                     "Test {} doesn't have configured path".format(test))

@@ -6,6 +6,7 @@ import os
 
 
 DEFAULT_CONFIG_FILENAME = os.path.expanduser("~/.ipa_vagrant_config.yaml")
+DEFAULT_TOPO_CONFIG_FILENAME = os.path.expanduser("~/.ipa_vagrant_topo_config.yaml")
 
 RPMS_DIR = "rpms"
 LOGS_DIR = "logs"

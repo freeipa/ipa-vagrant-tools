@@ -8,6 +8,7 @@ import sys
 import traceback
 
 from ipavagrant.ipaci import IPACIRunner
+from ipavagrant import constants
 
 def main():
     parser = argparse.ArgumentParser(description="")
@@ -20,6 +21,19 @@ def main():
     parser.add_argument("--debug", action="store_true", default=False,
                         dest="debug",
                         help="Enables DEBUG level logging")
+    parser.add_argument("--config-topo-file", dest="config_topo_file",
+                        default=None,
+                        help="Path for configuration file contains tests and "
+                             "topologies configuration. (default: {})".format(
+                            constants.DEFAULT_TOPO_CONFIG_FILENAME
+                        ))
+    parser.add_argument('--export-topo-config', dest="export_topo_config",
+                        default=False,
+                        action="store_true", help="export current "
+                        "configuration to config file (destination: "
+                        "--config-topo-file)")
+    parser.add_argument('--list-tests', dest="list_tests", default=False,
+                        action="store_true", help="list available tests")
     # parser.add_argument("--ip-address", dest="ip_address", type=str,
     #                     metavar="IPADDR", required=True,
     #                     help="the ip address of the controller")
@@ -36,7 +50,10 @@ def main():
     else:
         logging.basicConfig(level=logging.INFO)
 
-    runner = IPACIRunner(args.test_name)
+    runner = IPACIRunner(
+        args.test_name,
+        config_topo_file=args.config_topo_file
+    )
 
     if args.initialize:
         if runner.is_initialized():
@@ -45,6 +62,16 @@ def main():
             runner.initialize()
             print("Initialization done", file=sys.stderr)
             sys.exit(0)
+
+    if args.export_topo_config:
+        where = runner.topo_config.export_config()
+        print("Configuration saved to", where, file=sys.stderr)
+        return
+
+    if args.list_tests:
+        print("Following tests are configured:", file=sys.stderr)
+        print("\n".join(runner.topo_config.tests.keys()))
+        return
 
     if not runner.is_initialized():
         raise RuntimeError("IPA CI runner must be initialized first in "
