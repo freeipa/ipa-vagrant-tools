@@ -122,6 +122,6 @@ class IPATopoConfig(object):
         if self.filename:
             filename = self.filename
         else:
-            filename = DEFAULT_CONFIG_FILENAME
+            filename = DEFAULT_TOPO_CONFIG_FILENAME
 
         return filename
