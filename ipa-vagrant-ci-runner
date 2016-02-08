@@ -69,8 +69,7 @@ def main():
         return
 
     if args.list_tests:
-        print("Following tests are configured:", file=sys.stderr)
-        print("\n".join(runner.topo_config.tests.keys()))
+        print("\n".join(sorted(runner.topo_config.tests.keys())))
         return
 
     if not runner.is_initialized():
