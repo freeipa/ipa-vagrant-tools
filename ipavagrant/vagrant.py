@@ -34,14 +34,16 @@ end
 
     BOX_TEMPLATE = """
     config.vm.define "{conf_name}" {primary_machine} do |{conf_name}|
-        {conf_name}.vm.network "private_network", ip: "#{{NETWORK}}.{ipaddr_last_octet}"
-        {conf_name}.vm.hostname = "{conf_name}.#{{DOMAIN}}"
+        {conf_name}.vm.provider "libvirt" do |domain,override|
+            domain.memory = {memory}
+            override.vm.network "private_network", ip: "#{{NETWORK}}.{ipaddr_last_octet}"
+            override.vm.hostname = "{conf_name}.#{{DOMAIN}}"
 
-        {conf_name}.vm.provider "libvirt" do |domain|
-            domain.memory = {memory}
         end
-        {conf_name}.vm.provider "virtualbox" do |domain|
+        {conf_name}.vm.provider "virtualbox" do |domain,override|
             domain.memory = {memory}
+            override.vm.network "private_network", ip: "#{{NETWORK}}.{ipaddr_last_octet}"
+            override.vm.hostname = "{conf_name}.#{{DOMAIN}}"
         end
         {conf_name}.vm.provider "ovirt3" do |domain|
             domain.memory = {memory}
