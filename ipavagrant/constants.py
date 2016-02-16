@@ -32,7 +32,7 @@ DEFAULT_CONFIG = dict(
     ipa_ci_debug=False,
     ipa_ci_dirman_dn="cn=Directory Manager",
     ipa_ci_dirman_password="Secret123",
-    ipa_ci_dns_forwarder="10.34.78.1",
+    ipa_ci_dns_forwarder="8.8.8.8",
     ipa_ci_nis_domain="ipatest",
     ipa_ci_ntp_server="1.pool.ntp.org",
     ipa_ci_root_ssh_key_filename="/root/.ssh/id_rsa",
