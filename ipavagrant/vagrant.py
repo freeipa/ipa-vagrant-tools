@@ -2,11 +2,11 @@
 # Author: Martin Basti
 # See LICENSE file for license
 
+import yaml  # python3-PyYAML
 import random
 import os
 import sys
 import io
-import yaml  # python3-PyYAML
 import pwd
 import time
 import subprocess
