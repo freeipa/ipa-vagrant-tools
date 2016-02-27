@@ -49,6 +49,8 @@ DEFAULT_CONFIG = dict(
         "PyYAML",
         "bind-dyndb-ldap"],
     selinux_enforcing=False,
+    packages=[],  # this is override from CLI
+    copr_repos=[],  # this is override from CLI
 )
 
 box_mapping = {

@@ -10,6 +10,7 @@ import logging
 import traceback
 
 from ipavagrant import constants
+from ipavagrant.config import IPAVagrantConfig
 from ipavagrant.ipaci import IPACITopology
 
 
@@ -85,21 +86,24 @@ def main():
     else:
         topology_path = os.path.abspath(args.topology_name)
 
-    ci_topo = IPACITopology(
-        topology_path,
-        config_file=args.config_file,
-        config_options=dict(
-            domain=args.domain,
-            memory_controller=args.memory_controller,
-            memory_server=args.memory_server,
-            memory_client=args.memory_client,
-            selinux_enforcing=args.selinux_enforcing,
-            box=args.box
-        ),
-        replicas=args.replicas,
-        clients=args.clients,
+    config = IPAVagrantConfig(
+        filename=args.config_file,
+        # options
+        domain=args.domain,
+        memory_controller=args.memory_controller,
+        memory_server=args.memory_server,
+        memory_client=args.memory_client,
+        selinux_enforcing=args.selinux_enforcing,
+        box=args.box,
         packages=args.packages,
         copr_repos=args.copr_repos
+    )
+
+    ci_topo = IPACITopology(
+        topology_path,
+        config=config,
+        replicas=args.replicas,
+        clients=args.clients,
     )
 
     if args.show_config:

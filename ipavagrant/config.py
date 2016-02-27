@@ -20,9 +20,8 @@ class IPAVagrantConfig(object):
     def __init__(self, filename=None, **options):
         self.filename = filename
         self.config = copy.copy(DEFAULT_CONFIG)
-
+        self.non_default_keys = set()
         self.load_config_from_file()
-
         self.__replace_options(options)
 
     def __getattr__(self, item):
@@ -38,8 +37,9 @@ class IPAVagrantConfig(object):
         for key in self.config.keys():
             try:
                 val = options.get(key, None)
-                if val is not None:
+                if val:
                     self.config[key] = val
+                    self.non_default_keys.add(key)
             except KeyError:
                 pass
 
@@ -66,6 +66,12 @@ class IPAVagrantConfig(object):
                         got=type(res[key])))
             else:
                 self.config[key] = res[key]
+                # user did not specify the config file, these options should,
+                # not be marked as defined by user, because they are taken
+                # from default config file
+                if not self.filename:
+                    continue
+                self.non_default_keys.add(key)
 
     def export_config(self):
         filename = self.get_filename()
@@ -83,6 +89,15 @@ class IPAVagrantConfig(object):
             filename = DEFAULT_CONFIG_FILENAME
 
         return filename
+
+    def update_config(self, other):
+        """Updates only nondefault attributes stored in other object
+        """
+        assert isinstance(other, IPAVagrantConfig)
+        self.config.update({
+            key: other.config[key] for key in other.non_default_keys
+        })
+        self.non_default_keys.update(other.non_default_keys)
 
 
 class IPATopoConfig(object):

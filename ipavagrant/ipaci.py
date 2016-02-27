@@ -21,25 +21,18 @@ class IPACITopology(VagrantCtl):
     """
 
     def __init__(
-            self, path, config_file=None, config_options=None,
-            replicas=0, clients=0,
-            packages=(), copr_repos=()):
+            self, path, config=None,
+            replicas=0, clients=0):
         super(IPACITopology, self).__init__(path)
-        if config_options is None:
-            config_options = {}
-        assert isinstance(config_options, dict)
-
-        self.config = IPAVagrantConfig(
-            filename=config_file,
-            **config_options
-        )
+        assert config is None or isinstance(config, IPAVagrantConfig)
+        self.config = config
 
         self.vagrant_file = VagrantFile(
             self.config.domain, self.config.box, path,
             self.config.memory_controller, self.config.memory_server,
             self.config.memory_client, replicas, clients,
-            extra_packages=packages,
-            extra_copr_repos=copr_repos,
+            extra_packages=self.config.packages,
+            extra_copr_repos=self.config.copr_repos,
             enforcing=self.config.selinux_enforcing,
             required_packages=self.config.required_packages,
             required_copr_repos=self.config.required_copr_repos)
@@ -178,12 +171,14 @@ class RunTest(object):
 class IPACIRunner(object):
     """Class for executing tests
     """
-    def __init__(self, tests, config_topo_file=None):
+    def __init__(self, tests, config_topo_file=None, config=None):
         assert isinstance(tests, list)
+        assert config is None or isinstance(config, IPAVagrantConfig)
         self.tests = tests
         self.topologies_ready = {}
 
         self.topo_config = IPATopoConfig(filename=config_topo_file)
+        self.config = config
 
         # init file is used to store internal information about VM, config,
         # etc..
@@ -210,15 +205,20 @@ class IPACIRunner(object):
             key: val for key, val in t_config.items()
             if key in constants.DEFAULT_CONFIG
         }
+        config = IPAVagrantConfig(
+            filename=t_config.get('config_file'),
+            **config_options
+        )
+
+        # priority from CLI options and CLI specified config file
+        if self.config:
+            config.update_config(self.config)
 
         topo = IPACITopology(
             path,
-            config_file=t_config.get('config_file'),
+            config=config,
             replicas=t_config.get('replicas', 0),
             clients=t_config.get('clients', 0),
-            copr_repos=t_config.get('copr_repos', []),
-            packages=t_config.get('packages', []),
-            config_options=config_options
         )
         self.topologies_ready[topology_name] = topo
 

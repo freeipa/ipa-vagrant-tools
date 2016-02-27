@@ -7,6 +7,7 @@ import logging
 import sys
 import traceback
 
+from ipavagrant.config import IPAVagrantConfig
 from ipavagrant.ipaci import IPACIRunner
 from ipavagrant import constants
 
@@ -19,6 +20,50 @@ def main():
     parser.add_argument("--init", action="store_true", default=False,
                         dest="initialize",
                         help="Initialize IPA CI runner in current directory")
+    test_config = parser.add_argument_group("Test configuration options")
+    test_config.add_argument(
+        '--add-package', dest="packages", action="append",
+        help="Allows to specify packages that will be installed from "
+             "repository",
+        default=[], metavar="NAME")
+    test_config.add_argument(
+        '--add-copr', dest="copr_repos", action="append",
+        help="Allows to specify copr repositories that will be enabled",
+        default=[], metavar="NAME")
+    test_config.add_argument(
+        '--memory-controller', dest="memory_controller",
+        help="Allows to specify memory for controller [MB]",
+        metavar="MBytes", default=None)
+    test_config.add_argument(
+        '--memory-server', dest="memory_server",
+        help="Allows to specify memory for server [MB]",
+        metavar="MBytes", default=None)
+    test_config.add_argument(
+        '--memory-client', dest="memory_client",
+        help="Allows to specify memory for client [MB]",
+        metavar="MBytes", default=None)
+
+    # selinux
+    test_config.add_argument(
+        '--selinux-enforce', dest="selinux_enforcing",
+        action='store_true',
+        help="Set SELinux to enforce mode")
+    test_config.add_argument(
+        '--no-selinux-enforce', dest="selinux_enforcing",
+        action='store_false',
+        help="Set SELinux to permissive mode")
+    test_config.set_defaults(selinux_enforcing=None)
+
+    test_config.add_argument(
+        '--box', dest="box", default=None,
+        help="Set box that will be used")
+    test_config.add_argument(
+        '--domain', dest="domain", type=str,
+        default=None, help="Domain for provisioned VM")
+
+    parser.add_argument('--config-file', dest="config_file", default=None,
+                        help="Path to configuration file (default: %s)" %
+                        constants.DEFAULT_CONFIG_FILENAME)
     parser.add_argument("--debug", action="store_true", default=False,
                         dest="debug",
                         help="Enables DEBUG level logging")
@@ -41,9 +86,23 @@ def main():
     else:
         logging.basicConfig(level=logging.INFO)
 
+    config = IPAVagrantConfig(
+        filename=args.config_file,
+        # options
+        domain=args.domain,
+        memory_controller=args.memory_controller,
+        memory_server=args.memory_server,
+        memory_client=args.memory_client,
+        selinux_enforcing=args.selinux_enforcing,
+        box=args.box,
+        packages=args.packages,
+        copr_repos=args.copr_repos
+    )
+
     runner = IPACIRunner(
         args.test_name,
-        config_topo_file=args.config_topo_file
+        config_topo_file=args.config_topo_file,
+        config=config
     )
 
     if args.initialize:
