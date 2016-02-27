@@ -2,7 +2,6 @@
 # Author: Martin Basti
 # See LICENSE file for license
 
-import yaml  # python3-PyYAML
 import random
 import os
 import sys
@@ -11,6 +10,8 @@ import pwd
 import time
 import subprocess
 import logging
+
+import yaml  # python3-PyYAML
 
 from . import constants
 
