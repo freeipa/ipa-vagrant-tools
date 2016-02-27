@@ -61,24 +61,30 @@ def main():
         '--domain', dest="domain", type=str,
         default=None, help="Domain for provisioned VM")
 
-    parser.add_argument('--config-file', dest="config_file", default=None,
-                        help="Path to configuration file (default: %s)" %
-                        constants.DEFAULT_CONFIG_FILENAME)
+    file_config = parser.add_argument_group("Configuration file options")
+    file_config.add_argument(
+        '--config-file', dest="config_file", default=None,
+        help="Path to configuration file (default: %s)" %
+        constants.DEFAULT_CONFIG_FILENAME)
+    file_config.add_argument(
+        "--config-topo-file", dest="config_topo_file",
+        default=None,
+        help="Path for configuration file contains tests and topologies "
+             "configuration. (default: {})".format(
+                 constants.DEFAULT_TOPO_CONFIG_FILENAME))
+    file_config.add_argument(
+        '--export-topo-config', dest="export_topo_config",
+        default=False, action="store_true",
+        help="export current configuration to config file (destination: "
+             "--config-topo-file)")
+    file_config.add_argument(
+        '--list-tests', dest="list_tests", default=False,
+        action="store_true", help="list available/configured tests")
+
     parser.add_argument("--debug", action="store_true", default=False,
                         dest="debug",
                         help="Enables DEBUG level logging")
-    parser.add_argument("--config-topo-file", dest="config_topo_file",
-                        default=None,
-                        help="Path for configuration file contains tests and "
-                             "topologies configuration. (default: {})".format(
-                                 constants.DEFAULT_TOPO_CONFIG_FILENAME))
-    parser.add_argument('--export-topo-config', dest="export_topo_config",
-                        default=False,
-                        action="store_true", help="export current "
-                        "configuration to config file (destination: "
-                        "--config-topo-file)")
-    parser.add_argument('--list-tests', dest="list_tests", default=False,
-                        action="store_true", help="list available tests")
+
     args = parser.parse_args()
 
     if args.debug:

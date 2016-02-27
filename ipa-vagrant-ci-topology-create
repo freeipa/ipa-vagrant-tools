@@ -68,15 +68,20 @@ def main():
     test_config.add_argument(
         '--domain', dest="domain", type=str,
         default=None, help="Domain for provisioned VM")
-    parser.add_argument('--config-file', dest="config_file", default=None,
-                        help="Path to configuration file (default: %s)" %
-                        constants.DEFAULT_CONFIG_FILENAME)
-    parser.add_argument('--export-config', dest="export_config", default=False,
-                        action="store_true", help="export current "
-                        "configuration to config file (destination: "
-                        "--config-file)")
-    parser.add_argument('--show-config', dest="show_config", default=False,
-                        action="store_true", help="show current configuration")
+
+    file_config = parser.add_argument_group("Configuration file options")
+    file_config.add_argument(
+        '--config-file', dest="config_file", default=None,
+        help="Path to configuration file (default: %s)" %
+        constants.DEFAULT_CONFIG_FILENAME)
+    file_config.add_argument(
+        '--export-config', dest="export_config", default=False,
+        action="store_true", help="export current configuration to config "
+                                  "file (destination: --config-file)")
+    file_config.add_argument(
+        '--show-config', dest="show_config", default=False,
+        action="store_true", help="show current configuration")
+
     parser.add_argument("--debug", action="store_true", default=False,
                         dest='debug',
                         help="Enables DEBUG level logging")
