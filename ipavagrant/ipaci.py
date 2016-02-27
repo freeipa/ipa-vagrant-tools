@@ -27,15 +27,10 @@ class IPACITopology(VagrantCtl):
         assert config is None or isinstance(config, IPAVagrantConfig)
         self.config = config
 
-        self.vagrant_file = VagrantFile(
-            self.config.domain, self.config.box, path,
-            self.config.memory_controller, self.config.memory_server,
-            self.config.memory_client, replicas, clients,
-            extra_packages=self.config.packages,
-            extra_copr_repos=self.config.copr_repos,
-            enforcing=self.config.selinux_enforcing,
-            required_packages=self.config.required_packages,
-            required_copr_repos=self.config.required_copr_repos)
+        if not self.config:
+            self.config = IPAVagrantConfig()
+
+        self.vagrant_file = VagrantFile(path, config, replicas, clients)
 
     def _create_directories(self):
         logging.debug("Creating directory structure for '%s' topology",

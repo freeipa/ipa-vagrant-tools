@@ -14,6 +14,7 @@ import logging
 import yaml  # python3-PyYAML
 
 from . import constants
+from .config import IPAVagrantConfig
 
 
 class VagrantFile(object):
@@ -59,23 +60,12 @@ end
     end
 """
 
-    def __init__(self, domain, box, topology_path, mem_controller, mem_server,
-                 mem_client, num_replicas=0, num_clients=0, extra_packages=(),
-                 extra_copr_repos=(), enforcing=False, required_packages=(),
-                 required_copr_repos=()):
-        self.domain = domain
-        self.box = box
+    def __init__(self, topology_path, config, num_replicas, num_clients):
+        assert isinstance(config, IPAVagrantConfig)
         self.num_replicas = num_replicas
         self.num_clients = num_clients
-        self.extra_packages = extra_packages
-        self.extra_copr_repos = extra_copr_repos
-        self.mem_controller = mem_controller
-        self.mem_server = mem_server
-        self.mem_client = mem_client
-        self.required_packages = required_packages
         self.topology_path = topology_path
-        self.enforcing = enforcing
-        self.required_copr_repos = required_copr_repos
+        self.config = config
 
         self.network_octets = '192.168.%s' % random.randint(100, 200)
         self.ip_addrs = self._generate_ip_addresses(self.network_octets,
@@ -202,7 +192,7 @@ OvirtConfig[:lab] = {{
 
         return OVIRT_PROVIDER_CONFIG_TEMPLATE.format(ovirt_config=config_name)
 
-    def _generate_provider_specific_images(self, box):
+    def _generate_provider_specific_images(self):
         PROVIDER_IMAGES_OVERRIDE_TEMPLATE = """
     config.vm.provider "{provider}" do |domain, override|
 {overrides}
@@ -210,12 +200,13 @@ OvirtConfig[:lab] = {{
 """
         PROVIDER_IMAGES_OVERRIDE_LINE_TEMPLATE = "\t\t{key} = \"{value}\"\n"
         images = ""
-        for provider in constants.box_mapping[box]:
+        for provider in constants.box_mapping[self.config.box]:
             overrides = ""
-            for key in constants.box_mapping[box][provider]:
+            for key in constants.box_mapping[self.config.box][provider]:
                 overrides += PROVIDER_IMAGES_OVERRIDE_LINE_TEMPLATE.format(
                     key=key,
-                    value=constants.box_mapping[box][provider][key],
+                    value=constants.box_mapping[
+                        self.config.box][provider][key],
                 )
             images += PROVIDER_IMAGES_OVERRIDE_TEMPLATE.format(
                 provider=provider,
@@ -234,7 +225,8 @@ OvirtConfig[:lab] = {{
         # enable copr repos
         content.extend([
             "sudo dnf copr enable {copr} -y".format(copr=copr)
-            for copr in (self.required_copr_repos + self.extra_copr_repos)
+            for copr in (self.config.required_copr_repos +
+                         self.config.copr_repos)
         ])
 
         # upgrade and install local RPMs
@@ -247,7 +239,7 @@ OvirtConfig[:lab] = {{
             ),
         ])
 
-        packages = self.required_packages + self.extra_packages
+        packages = self.config.required_packages + self.config.packages
         if packages:
             content.append(
                 "sudo dnf install {} --best --allowerasing -y".format(
@@ -258,7 +250,8 @@ OvirtConfig[:lab] = {{
     def _shell_generate_resolv_file(self):
         ip_addresses = self.ip_addrs
         content = [
-            "sudo echo 'search {}' > /etc/resolv.conf".format(self.domain),
+            "sudo echo 'search {}' > /etc/resolv.conf".format(
+                self.config.domain),
             "sudo echo 'nameserver {}' >> /etc/resolv.conf".format(
                 ip_addresses['master']['ip'])
         ]
@@ -282,7 +275,7 @@ OvirtConfig[:lab] = {{
                 "sudo echo '{ip} {name}.{domain}' >> /etc/hosts".format(
                     ip=ip_addresses[n]['ip'],
                     name=n,
-                    domain=self.domain,
+                    domain=self.config.domain,
                 ),
             )
 
@@ -292,15 +285,15 @@ OvirtConfig[:lab] = {{
                     "sudo echo '{ip} {name}.{domain}' >> /etc/hosts".format(
                         ip=v['ip'],
                         name=n,
-                        domain=self.domain,
+                        domain=self.config.domain,
                     ),
                 )
 
         return content
 
     def _shell_set_hostname(self, hostname):
-        if not hostname.endswith(self.domain):
-            hostname = '{h}.{d}'.format(h=hostname, d=self.domain)
+        if not hostname.endswith(self.config.domain):
+            hostname = '{h}.{d}'.format(h=hostname, d=self.config.domain)
 
         return [
             "sudo hostnamectl set-hostname {}".format(hostname)
@@ -337,7 +330,8 @@ OvirtConfig[:lab] = {{
 
     def _shell_generate_setenforce(self):
         content = [
-            "sudo setenforce %s" % ('1' if self.enforcing else '0'),
+            "sudo setenforce %s" % (
+                '1' if self.config.selinux_enforcing else '0'),
         ]
         return content
 
@@ -354,7 +348,7 @@ OvirtConfig[:lab] = {{
             conf_name="controller",
             ipaddr_last_octet=self.ip_addrs['controller']['last_octet'],
             primary_machine=", primary: true",
-            memory=self.mem_controller,
+            memory=self.config.memory_controller,
             time=timestamp,
             shell='\n'.join(shell_basic_conf +
                             self._shell_generate_cp_controller_key() +
@@ -365,7 +359,7 @@ OvirtConfig[:lab] = {{
             conf_name="master",
             ipaddr_last_octet=self.ip_addrs['master']['last_octet'],
             primary_machine="",
-            memory=self.mem_server,
+            memory=self.config.memory_server,
             time=timestamp,
             shell='\n'.join(
                 shell_basic_conf +
@@ -379,7 +373,7 @@ OvirtConfig[:lab] = {{
                 conf_name=name,
                 ipaddr_last_octet=addr['last_octet'],
                 primary_machine="",
-                memory=self.mem_server,
+                memory=self.config.memory_server,
                 time=timestamp,
                 shell='\n'.join(
                     shell_basic_conf +
@@ -394,7 +388,7 @@ OvirtConfig[:lab] = {{
                 conf_name=name,
                 ipaddr_last_octet=addr['last_octet'],
                 primary_machine="",
-                memory=self.mem_client,
+                memory=self.config.memory_client,
                 time=timestamp,
                 shell='\n'.join(
                     shell_basic_conf +
@@ -410,8 +404,7 @@ OvirtConfig[:lab] = {{
             "\n".join(clients_conf)
         ])
 
-        provider_specific_images = self._generate_provider_specific_images(
-            self.box)
+        provider_specific_images = self._generate_provider_specific_images()
         providers_config = ''
         providers_config += self._generate_ovirt3_configuration()
         prefix = pwd.getpwuid(os.getuid()).pw_name
@@ -421,7 +414,7 @@ OvirtConfig[:lab] = {{
             providers=providers_config,
             images=provider_specific_images,
             network=self.network_octets,
-            domain=self.domain,
+            domain=self.config.domain,
             boxes=boxes_conf_export,
         )
 
@@ -458,8 +451,8 @@ OvirtConfig[:lab] = {{
 
         hosts = []
         master = {
-            'name': "{}.{}".format('master', self.domain),
-            'external_hostname': "{}.{}".format('master', self.domain),
+            'name': "{}.{}".format('master', self.config.domain),
+            'external_hostname': "{}.{}".format('master', self.config.domain),
             'ip': self.ip_addrs['master']['ip'],
             'role': "master",
         }
@@ -468,14 +461,15 @@ OvirtConfig[:lab] = {{
         for key, role in [('replicas', 'replica'), ('clients', 'client')]:
             for name, addr in self.ip_addrs[key].items():
                 hosts.append({
-                    'name': "{}.{}".format(name, self.domain),
-                    'external_hostname': "{}.{}".format(name, self.domain),
+                    'name': "{}.{}".format(name, self.config.domain),
+                    'external_hostname': "{}.{}".format(name,
+                                                        self.config.domain),
                     'ip': addr['ip'],
                     'role': role,
                 })
 
         domains = [{
-            'name': self.domain,
+            'name': self.config.domain,
             'type': "IPA",
             'hosts': hosts,
         }]
