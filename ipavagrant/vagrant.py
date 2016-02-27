@@ -37,13 +37,15 @@ end
     config.vm.define "{conf_name}" {primary_machine} do |{conf_name}|
         {conf_name}.vm.provider "libvirt" do |domain,override|
             domain.memory = {memory}
-            override.vm.network "private_network", ip: "#{{NETWORK}}.{ipaddr_last_octet}"
+            override.vm.network "private_network",
+                                ip: "#{{NETWORK}}.{ipaddr_last_octet}"
             override.vm.hostname = "{conf_name}.#{{DOMAIN}}"
 
         end
         {conf_name}.vm.provider "virtualbox" do |domain,override|
             domain.memory = {memory}
-            override.vm.network "private_network", ip: "#{{NETWORK}}.{ipaddr_last_octet}"
+            override.vm.network "private_network",
+                                ip: "#{{NETWORK}}.{ipaddr_last_octet}"
             override.vm.hostname = "{conf_name}.#{{DOMAIN}}"
         end
         {conf_name}.vm.provider "ovirt3" do |domain|
@@ -171,9 +173,11 @@ OvirtConfig[:lab] = {{
         # lab certificate is not signed by trusted CA
         domain.ca_no_verify = true
 
-        # each provider requires box but here it is just dummy because we use lab template
+        # each provider requires box but here it is just dummy because we
+        # use lab template
         override.vm.box = 'dummy'
-        override.vm.box_url = 'https://github.com/myoung34/vagrant-ovirt3/blob/master/example_box/dummy.box?raw=true'
+        override.vm.box_url = 'https://github.com/myoung34/vagrant-ovirt3/'\\
+                              'blob/master/example_box/dummy.box?raw=true'
     end
 """
         if not all((api_user, vm_user, vm_ssh_private_key)):
@@ -222,7 +226,8 @@ OvirtConfig[:lab] = {{
     def _shell_generate_install_basic_pkgs(self):
         content = [
             "sudo dnf clean all",
-            "sudo dnf upgrade dnf* --best --allowerasing -y",  # upgrade dnf to fix it
+            # upgrade dnf to fix it
+            "sudo dnf upgrade dnf* --best --allowerasing -y",
             "sudo dnf config-manager --set-enabled updates-testing"
         ]
 
@@ -245,7 +250,8 @@ OvirtConfig[:lab] = {{
         packages = self.required_packages + self.extra_packages
         if packages:
             content.append(
-                "sudo dnf install {} --best --allowerasing -y".format(" ".join(packages))
+                "sudo dnf install {} --best --allowerasing -y".format(
+                    " ".join(packages))
             )
         return content
 
@@ -253,12 +259,14 @@ OvirtConfig[:lab] = {{
         ip_addresses = self.ip_addrs
         content = [
             "sudo echo 'search {}' > /etc/resolv.conf".format(self.domain),
-            "sudo echo 'nameserver {}' >> /etc/resolv.conf".format(ip_addresses['master']['ip'])
+            "sudo echo 'nameserver {}' >> /etc/resolv.conf".format(
+                ip_addresses['master']['ip'])
         ]
 
         for value in ip_addresses['replicas'].values():
             content.append(
-                "sudo echo 'nameserver {}' >> /etc/resolv.conf".format(value['ip'])
+                "sudo echo 'nameserver {}' >> /etc/resolv.conf".format(
+                    value['ip'])
             )
         return content
 
@@ -315,8 +323,8 @@ OvirtConfig[:lab] = {{
 
     def _shell_generate_add_controller_key_to_athorized(self):
         content = self._shell_generate_create_root_ssh_dir() + [
-            "sudo cat '/vagrant/{sshpub}' >> /root/.ssh/authorized_keys".format(
-                sshpub=constants.CONTROLLER_SSH_PUB_KEY),
+            "sudo cat '/vagrant/{sshpub}' >> /root/.ssh/authorized_keys".
+            format(sshpub=constants.CONTROLLER_SSH_PUB_KEY),
         ]
         return content
 
@@ -359,9 +367,10 @@ OvirtConfig[:lab] = {{
             primary_machine="",
             memory=self.mem_server,
             time=timestamp,
-            shell='\n'.join(shell_basic_conf +
-                            self._shell_generate_add_controller_key_to_athorized() +
-                            self._shell_set_hostname('master'))
+            shell='\n'.join(
+                shell_basic_conf +
+                self._shell_generate_add_controller_key_to_athorized() +
+                self._shell_set_hostname('master'))
         )
 
         replicas_conf = []
@@ -372,9 +381,10 @@ OvirtConfig[:lab] = {{
                 primary_machine="",
                 memory=self.mem_server,
                 time=timestamp,
-                shell='\n'.join(shell_basic_conf +
-                                self._shell_generate_add_controller_key_to_athorized() +
-                                self._shell_set_hostname(name))
+                shell='\n'.join(
+                    shell_basic_conf +
+                    self._shell_generate_add_controller_key_to_athorized() +
+                    self._shell_set_hostname(name))
             )
             replicas_conf.append(replica)
 
@@ -386,9 +396,10 @@ OvirtConfig[:lab] = {{
                 primary_machine="",
                 memory=self.mem_client,
                 time=timestamp,
-                shell='\n'.join(shell_basic_conf +
-                                self._shell_generate_add_controller_key_to_athorized() +
-                                self._shell_set_hostname(name))
+                shell='\n'.join(
+                    shell_basic_conf +
+                    self._shell_generate_add_controller_key_to_athorized() +
+                    self._shell_set_hostname(name))
             )
             clients_conf.append(client)
 
@@ -399,7 +410,8 @@ OvirtConfig[:lab] = {{
             "\n".join(clients_conf)
         ])
 
-        provider_specific_images = self._generate_provider_specific_images(self.box)
+        provider_specific_images = self._generate_provider_specific_images(
+            self.box)
         providers_config = ''
         providers_config += self._generate_ovirt3_configuration()
         prefix = pwd.getpwuid(os.getuid()).pw_name

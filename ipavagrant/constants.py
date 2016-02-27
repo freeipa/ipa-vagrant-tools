@@ -6,7 +6,8 @@ import os
 
 
 DEFAULT_CONFIG_FILENAME = os.path.expanduser("~/.ipa_vagrant_config.yaml")
-DEFAULT_TOPO_CONFIG_FILENAME = os.path.expanduser("~/.ipa_vagrant_topo_config.yaml")
+DEFAULT_TOPO_CONFIG_FILENAME = os.path.expanduser(
+    "~/.ipa_vagrant_topo_config.yaml")
 
 RPMS_DIR = "rpms"
 LOGS_DIR = "logs"
@@ -148,13 +149,16 @@ DEFAULT_TEST_TOPO_CONFIG = {
         #     'domain': 'ipa.test',
         #     'copr_repos': ['repo1', 'repo2'],
         #     'packages': ['pkg1', 'pkg2'],
-        #     'config_file': '/path/to/config',  # otherwise default configuration will be used
+        #     'config_file': '/path/to/config',
+        #         ^--------- otherwise default configuration will be used
         # AND any option from DEFAULT_CONFIG
         # }
 
         '_default_': {
             'replicas': 1,
-            'packages': ['freeipa-server', 'freeipa-server-dns', 'freeipa-tests'],
+            'packages': [
+                'freeipa-server', 'freeipa-server-dns', 'freeipa-tests',
+            ],
         },
         'master_only': {
         },

@@ -23,8 +23,7 @@ class IPACITopology(VagrantCtl):
     def __init__(
             self, path, config_file=None, config_options=None,
             replicas=0, clients=0,
-            packages=(), copr_repos=()
-        ):
+            packages=(), copr_repos=()):
         super(IPACITopology, self).__init__(path)
         if config_options is None:
             config_options = {}
@@ -72,8 +71,10 @@ class IPACITopology(VagrantCtl):
             stderr=subprocess.PIPE)
         try:
             outs, errs = proc.communicate(timeout=15)
-            logging.debug("Keygen stdout:\n" + outs.decode(sys.stdout.encoding))
-            logging.debug("Keygen stderr:\n" + errs.decode(sys.stderr.encoding))
+            logging.debug("Keygen stdout: %s\n",
+                          outs.decode(sys.stdout.encoding))
+            logging.debug("Keygen stderr: %s\n",
+                          errs.decode(sys.stderr.encoding))
         except subprocess.TimeoutExpired:
             proc.kill()
             raise RuntimeError("Timeout during generating SSH keys")
@@ -81,7 +82,8 @@ class IPACITopology(VagrantCtl):
             if proc.returncode is not None and proc.returncode != 0:
                 raise RuntimeError("Failed to generate SSH key: %s" % errs)
 
-        with io.open(os.path.join(self.path, constants.VAGRANT_FILE), "w") as f:
+        path = os.path.join(self.path, constants.VAGRANT_FILE)
+        with io.open(path, "w") as f:
             f.write(self.vagrant_file.generate_vagrant_file())
             f.close()
 
@@ -105,7 +107,8 @@ class IPACITopology(VagrantCtl):
 
 class RunTest(object):
     """
-    This allows to configure ssh connection to controller machine and start test.
+    This allows to configure ssh connection to controller machine and start
+    test.
     """
     def __init__(self, test_path, ssh_config):
 
@@ -182,7 +185,8 @@ class IPACIRunner(object):
 
         self.topo_config = IPATopoConfig(filename=config_topo_file)
 
-        # init file is used to store internal information about VM, config, etc..
+        # init file is used to store internal information about VM, config,
+        # etc..
         self.init_file = os.path.abspath(constants.IPA_RUNNER_INIT_FILE)
         self.rpm_dir = os.path.abspath(constants.RPMS_DIR)
 

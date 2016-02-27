@@ -126,4 +126,3 @@ if __name__ == '__main__':
         logging.debug(traceback.format_exc())
         print(e, file=sys.stderr)
         sys.exit(2)
-
