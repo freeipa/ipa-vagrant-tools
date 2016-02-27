@@ -1,4 +1,6 @@
 # ipa-devel-tools
+Status: ![travis-ci status](https://travis-ci.org/bastiak/ipa-devel-tools.svg?branch=master)
+
 Tools to simplify freeIPA development and testing
 
 Installation:
