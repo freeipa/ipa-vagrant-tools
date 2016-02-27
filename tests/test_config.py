@@ -3,6 +3,7 @@
 # See LICENSE file for license
 
 import pytest
+import os
 
 from ipavagrant.config import IPAVagrantConfig, IPATopoConfig
 from ipavagrant.constants import (
@@ -11,6 +12,12 @@ from ipavagrant.constants import (
     DEFAULT_CONFIG
 )
 
+# keep list of attrs that are used internally, to avoid unwanted deletion
+REQUIRED_CONFIG_ATTRS = (
+    'domain', 'box', 'extra_packages', 'extra_copr_repos', 'mem_controller',
+    'mem_server', 'mem_client', 'required_packages', 'required_copr_repos',
+    'selinux_enforcing',
+)
 
 @pytest.fixture(scope="module")
 def default_config():
@@ -27,8 +34,15 @@ def test_default_config_file(default_config):
 
 
 @pytest.mark.parametrize("key,val", DEFAULT_CONFIG.items())
+@pytest.mark.skipif(os.path.exists(DEFAULT_CONFIG_FILENAME),
+                    reason="config file exists, defaults cannot be tested")
 def test_default_config_attrs(default_config, key, val):
     assert getattr(default_config, key) == val, "{} mistmatch".format(key)
+
+
+@pytest.mark.parametrize("key", REQUIRED_CONFIG_ATTRS)
+def test_required_config_attrs(default_config, key):
+    getattr(default_config, key)
 
 
 def test_default_config_no_attr(default_config):
