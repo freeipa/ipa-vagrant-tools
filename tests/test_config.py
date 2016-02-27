@@ -14,10 +14,11 @@ from ipavagrant.constants import (
 
 # keep list of attrs that are used internally, to avoid unwanted deletion
 REQUIRED_CONFIG_ATTRS = (
-    'domain', 'box', 'extra_packages', 'extra_copr_repos', 'mem_controller',
-    'mem_server', 'mem_client', 'required_packages', 'required_copr_repos',
-    'selinux_enforcing',
+    'domain', 'box', 'required_packages', 'required_copr_repos',
+    'memory_controller', 'memory_server', 'memory_client', 'packages',
+    'copr_repos', 'selinux_enforcing',
 )
+
 
 @pytest.fixture(scope="module")
 def default_config():
