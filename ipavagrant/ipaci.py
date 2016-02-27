@@ -30,7 +30,8 @@ class IPACITopology(VagrantCtl):
         if not self.config:
             self.config = IPAVagrantConfig()
 
-        self.vagrant_file = VagrantFile(path, config, replicas, clients)
+        self.vagrant_file = VagrantFile(
+            self.path, self.config, replicas, clients)
 
     def _create_directories(self):
         logging.debug("Creating directory structure for '%s' topology",
