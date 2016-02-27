@@ -129,7 +129,6 @@ class RunTest(object):
                         output_stream.buffer.write(data)
                 sys.stderr.flush()
 #            if sys.stdin in r:
-#                # TODO sending data doesnt work very well
 #                if session.send_ready():
 #                    session.send(sys.stdin.read(1))
 

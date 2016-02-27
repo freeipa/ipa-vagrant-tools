@@ -14,7 +14,6 @@ enable=
 disable=
     R,
     I,
-    fixme,
     invalid-name,
     missing-docstring
 

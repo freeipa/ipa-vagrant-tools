@@ -491,8 +491,6 @@ OvirtConfig[:lab] = {{
 class VagrantCtl(object):
     """Class for Vagrant controls: starting,halting destroying, etc..
     """
-    # TODO python-vagrant?
-
     def __init__(self, path):
         self.path = path
 
