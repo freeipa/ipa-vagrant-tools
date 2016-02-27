@@ -2,3 +2,4 @@ pylint
 paramiko
 PyYAML
 pep8
+pytest
