@@ -1,0 +1,34 @@
+[MASTER]
+# Pickle collected data for later comparisons.
+persistent=no
+
+# Use multiple processes to speed up Pylint.
+jobs=1
+
+[MESSAGES CONTROL]
+
+enable=
+    all,
+    python3
+
+disable=
+    R,
+    I,
+    fixme,
+    invalid-name,
+    missing-docstring
+
+
+[REPORTS]
+
+# Set the output format. Available formats are text, parseable, colorized, msvs
+# (visual studio) and html. You can also give a reporter class, eg
+# mypackage.mymodule.MyReporterClass.
+output-format=colorized
+
+# Tells whether to display a full report or only the messages
+reports=no
+
+# Template used to display messages. This is a python new-style format string
+# used to format the message information. See doc for all details
+msg-template='{path}:{line}: [{msg_id}({symbol}), {obj}] {msg})'

@@ -51,17 +51,35 @@ DEFAULT_CONFIG = dict(
 )
 
 box_mapping = {
-    "f22": {"libvirt": { "override.vm.box": "f22",
-                         "override.vm.box_url": "http://download.fedoraproject.org/pub/fedora/linux/releases/22/Cloud/x86_64/Images/Fedora-Cloud-Base-Vagrant-22-20150521.x86_64.vagrant-libvirt.box",
-                       },
-            "virtualbox": { "override.vm.box": "box-cutter/fedora22", },
-            "ovirt3": { "domain.template": "ipa-Fedora-23-x86_64-developer-brq", },
+    "f22": {
+        "libvirt": {
+            "override.vm.box": "f22",
+            "override.vm.box_url": "http://download.fedoraproject.org/pub/"
+                                   "fedora/linux/releases/22/Cloud/x86_64/"
+                                   "Images/Fedora-Cloud-Base-Vagrant-22-"
+                                   "20150521.x86_64.vagrant-libvirt.box",
+        },
+        "virtualbox": {
+            "override.vm.box": "box-cutter/fedora22",
+        },
+        "ovirt3": {
+            "domain.template": "ipa-Fedora-23-x86_64-developer-brq",
+        },
     },
-    "f23": {"libvirt": { "override.vm.box": "f23",
-                         "override.vm.box_url": "http://download.fedoraproject.org/pub/fedora/linux/releases/23/Cloud/x86_64/Images/Fedora-Cloud-Base-Vagrant-23-20151030.x86_64.vagrant-libvirt.box",
-                       },
-            "virtualbox": { "override.vm.box": "box-cutter/fedora23", },
-            "ovirt3": { "domain.template": "ipa-Fedora-23-x86_64-developer-brq", },
+    "f23": {
+        "libvirt": {
+            "override.vm.box": "f23",
+            "override.vm.box_url": "http://download.fedoraproject.org/pub/"
+                                   "fedora/linux/releases/23/Cloud/x86_64/"
+                                   "Images/Fedora-Cloud-Base-Vagrant-23-"
+                                   "20151030.x86_64.vagrant-libvirt.box",
+        },
+        "virtualbox": {
+            "override.vm.box": "box-cutter/fedora23",
+        },
+        "ovirt3": {
+            "domain.template": "ipa-Fedora-23-x86_64-developer-brq",
+        },
     },
 }
 

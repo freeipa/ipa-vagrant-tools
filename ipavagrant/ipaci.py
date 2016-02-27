@@ -46,29 +46,30 @@ class IPACITopology(VagrantCtl):
             required_copr_repos=self.config.required_copr_repos)
 
     def _create_directories(self):
-        logging.debug("Creating directory structure for '{}' topology".format(
-            os.path.basename(self.path)))
+        logging.debug("Creating directory structure for '%s' topology",
+                      os.path.basename(self.path))
         os.mkdir(self.path)
         os.mkdir(os.path.join(self.path, constants.RPMS_DIR))
         os.mkdir(os.path.join(self.path, constants.PROVISIONING_DIR))
 
     def create(self):
-        logging.info("Preparing '{}' topology".format(
-            os.path.basename(self.path)))
+        logging.info("Preparing '%s' topology",
+                     os.path.basename(self.path))
 
         self._create_directories()
 
         # generate SSH keys for controller
         command = [
             "ssh-keygen",
-            "-f", str(os.path.join(self.path,
-                constants.CONTROLLER_SSH_KEY)),
+            "-f", str(os.path.join(self.path, constants.CONTROLLER_SSH_KEY)),
             "-P", "",
         ]
-        logging.debug("Generate SSH keys for '{}' topology".format(
-            os.path.basename(self.path)))
-        proc = subprocess.Popen(command,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        logging.debug("Generate SSH keys for '%s' topology",
+                      os.path.basename(self.path))
+        proc = subprocess.Popen(
+            command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE)
         try:
             outs, errs = proc.communicate(timeout=15)
             logging.debug("Keygen stdout:\n" + outs.decode(sys.stdout.encoding))
@@ -117,17 +118,17 @@ class RunTest(object):
     def _print_output(self, session, output_stream=None):
         end = False
         while True:
-            r, w, x = select.select([session], [], [], 1.0)
+            r, _, _ = select.select([session], [], [], 1.0)
             if session in r:
                 while session.recv_ready():
                     data = session.recv(1)
-                    sys.stdout.buffer.write(data)
+                    sys.stdout.buffer.write(data)  # pylint: disable=no-member
                     if output_stream:
                         output_stream.buffer.write(data)
                 sys.stdout.flush()
                 while session.recv_stderr_ready():
                     data = session.recv_stderr(1)
-                    sys.stderr.buffer.write(data)
+                    sys.stderr.buffer.write(data)  # pylint: disable=no-member
                     if output_stream:
                         output_stream.buffer.write(data)
                 sys.stderr.flush()
@@ -162,11 +163,11 @@ class RunTest(object):
                 "ipa-run-tests --verbose "
                 "{test_path}".format(test_path=self.test_path)
             )
-            logging.info("Executing: {}".format(cmd))
+            logging.info("Executing: %s", cmd)
             session.exec_command(cmd)
 
             self._print_output(session, output_stream)
-            logging.info("EXIT STATUS: {}\n".format(session.recv_exit_status()))
+            logging.info("EXIT STATUS: %s\n", session.recv_exit_status())
         finally:
             ssh_client.close()
 
@@ -187,22 +188,24 @@ class IPACIRunner(object):
 
     def create_topology(self, topology_name):
         if topology_name in self.topologies_ready:
-            logging.debug("SKIP: Topology '{}' already prepared.".format(
-                topology_name))
+            logging.debug("SKIP: Topology '%s' already prepared.",
+                          topology_name)
             return self.topologies_ready[topology_name]
 
         t_config = self.topo_config.topologies.get(topology_name)
         if t_config is None:
-            logging.error("topology {} is not specified in config",
-                topology_name)
+            logging.error("topology %s is not specified in config",
+                          topology_name)
             raise RuntimeError("Missing topology configuration for {}".format(
                 topology_name
             ))
 
         path = os.path.abspath(topology_name)
         # load all config options that are allowed by DEFAULT_CONFIG
-        config_options = {key: val for key, val in t_config.items()
-            if key in constants.DEFAULT_CONFIG}
+        config_options = {
+            key: val for key, val in t_config.items()
+            if key in constants.DEFAULT_CONFIG
+        }
 
         topo = IPACITopology(
             path,
@@ -220,10 +223,10 @@ class IPACIRunner(object):
                             "creation", topology_name)
             return topo
 
-        logging.debug("Creating topology {}".format(topology_name))
+        logging.debug("Creating topology %s", topology_name)
         topo.create()
-        logging.info("Starting topology {}, this may take long time, please "
-                     "wait".format(topology_name))
+        logging.info("Starting topology %s, this may take long time, please "
+                     "wait", topology_name)
         output_file = "vagrant_up_{}.log".format(topology_name)
 
         # copy custom RPMs to topology

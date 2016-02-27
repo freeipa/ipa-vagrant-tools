@@ -18,7 +18,7 @@ from .constants import (
 class IPAVagrantConfig(object):
 
     def __init__(self, filename=None, **options):
-        self.filename=filename
+        self.filename = filename
         self.config = copy.copy(DEFAULT_CONFIG)
 
         self.load_config_from_file()

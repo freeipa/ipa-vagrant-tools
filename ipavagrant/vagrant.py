@@ -114,7 +114,8 @@ end
 
         return ip_addresses
 
-    def _generate_ovirt3_configuration(self,
+    def _generate_ovirt3_configuration(
+            self,
             api_user=None, api_password='Secret123', api_url=None,
             vm_user=None, vm_ssh_private_key=None,
             lab_datacenter='', lab_cluster=''):
@@ -181,14 +182,15 @@ OvirtConfig[:lab] = {{
             if not vm_user:
                 vm_user = user_info.pw_name
             if not vm_ssh_private_key:
-                vm_ssh_private_key = os.path.join(user_info.pw_dir,
-                    '.ssh', 'id_rsa')
+                vm_ssh_private_key = os.path.join(
+                    user_info.pw_dir, '.ssh', 'id_rsa')
 
         if not api_url:
             api_url = 'https://localhost:443'
 
         with open(os.path.join(self.topology_path, config_name), 'w') as f:
-            f.write(USER_CONFIG_TEMPLATE.format(api_user=api_user,
+            f.write(USER_CONFIG_TEMPLATE.format(
+                api_user=api_user,
                 api_password=api_password, api_url=api_url,
                 vm_user=vm_user, vm_ssh_private_key=vm_ssh_private_key,
                 lab_datacenter=lab_datacenter, lab_cluster=lab_cluster))
@@ -207,12 +209,12 @@ OvirtConfig[:lab] = {{
             overrides = ""
             for key in constants.box_mapping[box][provider]:
                 overrides += PROVIDER_IMAGES_OVERRIDE_LINE_TEMPLATE.format(
-                    key = key,
-                    value = constants.box_mapping[box][provider][key],
+                    key=key,
+                    value=constants.box_mapping[box][provider][key],
                 )
             images += PROVIDER_IMAGES_OVERRIDE_TEMPLATE.format(
-                provider = provider,
-                overrides = overrides,
+                provider=provider,
+                overrides=overrides,
             )
         return images
 
@@ -331,7 +333,7 @@ OvirtConfig[:lab] = {{
         return content
 
     def generate_vagrant_file(self):
-        timestamp=time.time()
+        timestamp = time.time()
         shell_basic_conf = []
         shell_basic_conf.extend(self._shell_generate_setenforce())
         shell_basic_conf.extend(self._shell_generate_install_basic_pkgs())
@@ -402,9 +404,9 @@ OvirtConfig[:lab] = {{
         prefix = pwd.getpwuid(os.getuid()).pw_name
 
         return self.CONFIG_TEMPLATE.format(
-            vm_name_prefix = prefix,
-            providers = providers_config,
-            images = provider_specific_images,
+            vm_name_prefix=prefix,
+            providers=providers_config,
+            images=provider_specific_images,
             network=self.network_octets,
             domain=self.domain,
             boxes=boxes_conf_export,
@@ -450,7 +452,7 @@ OvirtConfig[:lab] = {{
         }
         hosts.append(master)
 
-        for key, role in [('replicas', 'replica'),('clients', 'client')]:
+        for key, role in [('replicas', 'replica'), ('clients', 'client')]:
             for name, addr in self.ip_addrs[key].items():
                 hosts.append({
                     'name': "{}.{}".format(name, self.domain),
