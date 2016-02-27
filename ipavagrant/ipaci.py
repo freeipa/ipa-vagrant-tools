@@ -268,6 +268,14 @@ class IPACIRunner(object):
         if not os.path.isdir(self.rpm_dir):
             os.mkdir(self.rpm_dir)
 
+    def destroy(self):
+        try:
+            os.remove(self.init_file)
+        except OSError:
+            pass
+
+        shutil.rmtree(self.rpm_dir, ignore_errors=True)
+
     def run(self):
         if not self.is_initialized():
             raise RuntimeError("IPA CI runner must be initialized in current "
