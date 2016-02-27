@@ -170,7 +170,8 @@ class RunTest(object):
 class IPACIRunner(object):
     """Class for executing tests
     """
-    def __init__(self, tests, config_topo_file=None, config=None):
+    def __init__(self, tests, config_topo_file=None, config=None,
+                 dry_run=False):
         assert isinstance(tests, list)
         assert config is None or isinstance(config, IPAVagrantConfig)
         self.tests = tests
@@ -178,6 +179,7 @@ class IPACIRunner(object):
 
         self.topo_config = IPATopoConfig(filename=config_topo_file)
         self.config = config
+        self.dry_run = dry_run
 
         # init file is used to store internal information about VM, config,
         # etc..
@@ -241,15 +243,19 @@ class IPACIRunner(object):
 
         with io.open(output_file, "w") as f:
             # log output to file
-            topo.up(output_stream=f)  # start VM
+            if not self.dry_run:
+                topo.up(output_stream=f)  # start VM
 
         return topo
 
     def cleanup(self):
         for name, topo in self.topologies_ready.items():
             output_file = "vagrant_destroy_{}.log".format(name)
+            logging.info("Cleaning up %s topology", name)
             with io.open(output_file, "w") as f:
-                topo.destroy(output_stream=f)
+                if not self.dry_run:
+                    topo.destroy(output_stream=f)
+            logging.debug("Removing directory %s", topo.path)
             shutil.rmtree(topo.path)
 
     def is_initialized(self):
@@ -286,6 +292,10 @@ class IPACIRunner(object):
             topology = self.create_topology(topology_name)
 
             ssh_config = paramiko.SSHConfig()
+
+            if self.dry_run:
+                continue
+
             ssh_config.parse(io.StringIO(topology.get_ssh_config()))
 
             r = RunTest(test_path, ssh_config.lookup('controller'))

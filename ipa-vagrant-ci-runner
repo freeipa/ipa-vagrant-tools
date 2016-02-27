@@ -84,6 +84,10 @@ def main():
     parser.add_argument("--debug", action="store_true", default=False,
                         dest="debug",
                         help="Enables DEBUG level logging")
+    parser.add_argument("--dry-run", action="store_true", default=False,
+                        dest="dry_run",
+                        help="Do not execute any vagrant command, just "
+                             "create vagrant files (for testing)")
 
     args = parser.parse_args()
 
@@ -108,7 +112,8 @@ def main():
     runner = IPACIRunner(
         args.test_name,
         config_topo_file=args.config_topo_file,
-        config=config
+        config=config,
+        dry_run=args.dry_run
     )
 
     if args.initialize:
