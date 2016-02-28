@@ -107,11 +107,7 @@ end
 
         return ip_addresses
 
-    def _generate_ovirt3_configuration(
-            self,
-            api_user=None, api_password='Secret123', api_url=None,
-            vm_user=None, vm_ssh_private_key=None,
-            lab_datacenter='', lab_cluster=''):
+    def _generate_ovirt3_configuration(self):
         config_name = "ovirt3_user_config.rb"
         USER_CONFIG_TEMPLATE = """
 # -*- mode: ruby -*-
@@ -170,18 +166,15 @@ OvirtConfig[:lab] = {{
                               'blob/master/example_box/dummy.box?raw=true'
     end
 """
-        if not all((api_user, vm_user, vm_ssh_private_key)):
-            user_info = pwd.getpwuid(os.getuid())
-            if not api_user:
-                api_user = user_info.pw_name
-            if not vm_user:
-                vm_user = user_info.pw_name
-            if not vm_ssh_private_key:
-                vm_ssh_private_key = os.path.join(
-                    user_info.pw_dir, '.ssh', 'id_rsa')
+        config = self.config.ovirt3
 
-        if not api_url:
-            api_url = 'https://localhost:443'
+        api_user = config['api']['user']
+        api_password = config['api']['password']
+        api_url = config['api']['url']
+        vm_user = config['vm']['user']
+        vm_ssh_private_key = config['vm']['ssh_private_key']
+        lab_datacenter = config['lab']['datacenter']
+        lab_cluster = config['lab']['cluster']
 
         with open(os.path.join(self.topology_path, config_name), 'w') as f:
             f.write(USER_CONFIG_TEMPLATE.format(

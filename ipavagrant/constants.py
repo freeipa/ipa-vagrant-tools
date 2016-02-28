@@ -3,6 +3,7 @@
 # See LICENSE file for license
 
 import os
+import pwd
 
 
 DEFAULT_CONFIG_FILENAME = os.path.expanduser("~/.ipa_vagrant_config.yaml")
@@ -51,6 +52,22 @@ DEFAULT_CONFIG = dict(
     selinux_enforcing=False,
     packages=[],  # this is override from CLI
     copr_repos=[],  # this is override from CLI
+    ovirt3=dict(
+        api=dict(
+            user=pwd.getpwuid(os.getuid()).pw_name,
+            password="Secret123",
+            url="https://example.test:443",
+        ),
+        vm=dict(
+            user=pwd.getpwuid(os.getuid()).pw_name,
+            ssh_private_key=os.path.join(pwd.getpwuid(os.getuid()).pw_dir,
+                                         ".ssh", "id_rsa")
+        ),
+        lab=dict(
+            datacenter="",
+            cluster="",
+        ),
+    ),
 )
 
 box_mapping = {
