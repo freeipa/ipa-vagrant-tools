@@ -44,7 +44,7 @@ DEFAULT_CONFIG = dict(
     memory_controller=1024,
     memory_server=2048,
     required_copr_repos=[
-        "mkosek/freeipa-master"],
+        "@freeipa/freeipa-master"],
     required_packages=[
         "vim",
         "PyYAML",
