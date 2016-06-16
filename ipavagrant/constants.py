@@ -24,7 +24,7 @@ AUTO_DOMAIN_LEVEL = -1
 
 # please keep ABC order of keys
 DEFAULT_CONFIG = dict(
-    box="f23",
+    box="f24",
     ci_config_file="ipa-test-config.yaml",
     domain="ipa.test",
     ipa_ci_ad_admin_name="Administrator",
@@ -99,6 +99,22 @@ box_mapping = {
         },
         "ovirt3": {
             "domain.template": "ipa-Fedora-23-x86_64-developer-brq",
+        },
+    },
+    "f24": {
+        "libvirt": {
+            "override.vm.box": "f24",
+            "override.vm.box_url":
+                "http://download.eng.brq.redhat.com/pub/fedora/linux//"
+                "development/latest-24/CloudImages/x86_64/images/"
+                "Fedora-Cloud-Base-Vagrant-24-20160615.n.0.x86_64."
+                "vagrant-libvirt.box",
+        },
+        "virtualbox": {
+            "override.vm.box": "box-cutter/fedora24",
+        },
+        "ovirt3": {
+            "domain.template": "ipa-Fedora-24-x86_64-developer-brq",
         },
     },
 }
