@@ -67,7 +67,7 @@ end
         self.topology_path = topology_path
         self.config = config
 
-        self.network_octets = '192.168.%s' % random.randint(100, 200)
+        self.network_octets = '192.168.{0!s}'.format(random.randint(100, 200))
         self.ip_addrs = self._generate_ip_addresses(self.network_octets,
                                                     constants.IP_ADDR_FIRST)
 
@@ -90,7 +90,7 @@ end
         replicas = {}
         ip_addresses['replicas'] = replicas
         for k in range(1, self.num_replicas + 1):
-            replicas['replica%s' % k] = {
+            replicas['replica{0!s}'.format(k)] = {
                 'ip': '{}.{}'.format(network_24, i),
                 'last_octet': i,
             }
@@ -99,7 +99,7 @@ end
         clients = {}
         ip_addresses['clients'] = clients
         for k in range(1, self.num_clients + 1):
-            clients['client%s' % k] = {
+            clients['client{0!s}'.format(k)] = {
                 'ip': '{}.{}'.format(network_24, i),
                 'last_octet': i,
             }
@@ -323,8 +323,8 @@ OvirtConfig[:lab] = {{
 
     def _shell_generate_setenforce(self):
         content = [
-            "sudo setenforce %s" % (
-                '1' if self.config.selinux_enforcing else '0'),
+            "sudo setenforce {0!s}".format((
+                '1' if self.config.selinux_enforcing else '0')),
         ]
         return content
 
@@ -522,8 +522,8 @@ class VagrantCtl(object):
             raise RuntimeError("Timeout during 'vagrant ssh-config'")
         else:
             if p.returncode is not None and p.returncode != 0:
-                raise RuntimeError("Failed 'vagrant ssh-config': %s" %
-                                   errs.decode(sys.stderr.encoding))
+                raise RuntimeError("Failed 'vagrant ssh-config': {0!s}".format(
+                                   errs.decode(sys.stderr.encoding)))
 
             if errs:
                 logging.error(errs.decode(sys.stderr.encoding))

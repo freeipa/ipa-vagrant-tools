@@ -69,7 +69,7 @@ class IPACITopology(VagrantCtl):
             raise RuntimeError("Timeout during generating SSH keys")
         else:
             if proc.returncode is not None and proc.returncode != 0:
-                raise RuntimeError("Failed to generate SSH key: %s" % errs)
+                raise RuntimeError("Failed to generate SSH key: {0!s}".format(errs))
 
         path = os.path.join(self.path, constants.VAGRANT_FILE)
         with io.open(path, "w") as f:
