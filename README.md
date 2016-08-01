@@ -56,6 +56,3 @@ To get list of tests available please run:
 ```
 $ ipa-vagrant-ci-runner --list-tests
 ```
-
-## parallel-vagrant-up.sh
-Not so smart bash script that runs vagrant provisioning in local directory in parallel way.
