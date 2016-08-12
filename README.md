@@ -3,6 +3,8 @@ Status: ![travis-ci status](https://travis-ci.org/bastiak/ipa-devel-tools.svg?br
 
 Tools to simplify freeIPA development and testing
 
+TESTING
+
 Installation:
 ```
 $ sudo python3 setup.py install
