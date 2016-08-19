@@ -7,3 +7,5 @@ pylint ipavagrant ipa-vagrant-ci-*
 pep8 ipavagrant/* ipa-vagrant-ci-* tests/*
 
 py.test tests/ --verbose
+
+test
