@@ -56,3 +56,5 @@ To get list of tests available please run:
 ```
 $ ipa-vagrant-ci-runner --list-tests
 ```
+
+test
