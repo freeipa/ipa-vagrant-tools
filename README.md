@@ -56,3 +56,5 @@ To get list of tests available please run:
 ```
 $ ipa-vagrant-ci-runner --list-tests
 ```
+
+Test results and informations from provisioning are available in log in test directory.
