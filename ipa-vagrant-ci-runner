@@ -73,8 +73,10 @@ def main():
              "configuration. (default: {})".format(
                  constants.DEFAULT_TOPO_CONFIG_FILENAME))
     file_config.add_argument(
-        '--export-topo-config', dest="export_topo_config",
-        default=False, action="store_true",
+        '--export-topo-config',
+        dest="export_topo_config",
+        default=False,
+        action="store_true",
         help="export current configuration to config file (destination: "
              "--config-topo-file)")
     file_config.add_argument(
