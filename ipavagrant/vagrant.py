@@ -522,8 +522,11 @@ class VagrantCtl(object):
             raise RuntimeError("Timeout during 'vagrant ssh-config'")
         else:
             if p.returncode is not None and p.returncode != 0:
-                raise RuntimeError("Failed 'vagrant ssh-config': {0!s}".format(
-                                   errs.decode(sys.stderr.encoding)))
+                raise RuntimeError(
+                    "Failed 'vagrant ssh-config': {0!s}".format(
+                       errs.decode(sys.stderr.encoding)
+                    )
+                )
 
             if errs:
                 logging.error(errs.decode(sys.stderr.encoding))
