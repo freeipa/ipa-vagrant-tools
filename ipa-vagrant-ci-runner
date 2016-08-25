@@ -22,10 +22,13 @@ def main():
                         help="Initialize IPA CI runner in current directory")
     test_config = parser.add_argument_group("Test configuration options")
     test_config.add_argument(
-        '--add-package', dest="packages", action="append",
+        '--add-package',
+        dest="packages",
+        action="append",
         help="Allows to specify packages that will be installed from "
              "repository",
-        default=[], metavar="NAME")
+        default=[],
+        metavar="NAME")
     test_config.add_argument(
         '--add-copr', dest="copr_repos", action="append",
         help="Allows to specify copr repositories that will be enabled",
