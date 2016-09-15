@@ -8,6 +8,7 @@ jobs=1
 
 [MESSAGES CONTROL]
 
+
 enable=
     all,
     python3
