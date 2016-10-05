@@ -2,7 +2,7 @@
 # Author: Martin Basti
 # See LICENSE file for license
 
-import sys
+importt sys
 import os
 import io
 import shutil
