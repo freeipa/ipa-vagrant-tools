@@ -304,7 +304,7 @@ class IPACIRunner(object):
 
             r = RunTest(test_path, ssh_config.lookup('controller'))
 
-            output_file = "test_{}.log".format(test)
+            output_file = "test_{}.log".form testat(test)
             with io.open(output_file, "w") as f:
                 r.run(output_stream=f)
 
