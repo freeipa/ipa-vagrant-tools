@@ -4,8 +4,15 @@ Status: ![travis-ci status](https://travis-ci.org/bastiak/ipa-devel-tools.svg?br
 Tools to simplify freeIPA development and testing
 
 Installation:
+
+Install Vagrant using this howto: https://developer.fedoraproject.org/tools/vagrant/vagrant-libvirt.html
+
+Make sure you have enabled virtualization in BIOS, otherwise you will receive following error: `invalid argument: could not find capabilities for domaintype=kvm`
+
+Install script
 ```
-$ sudo python3 setup.py install
+$ sudo dnf install python3-devel openssl-devel -y
+$ python3 setup.py install --user
 ```
 
 ## ipa-vagrant-ci-topology-create
