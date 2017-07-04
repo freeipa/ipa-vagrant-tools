@@ -27,7 +27,7 @@ $ cd basic-test
     # to test own RPMs, please put them into rpm directory
 $ vagrant up
 $ vagrant ssh
-$ IPATEST_YAML_CONFIG=/vagrant/ipa-test-config.yaml ipa-run-tests test_integration/test_simple_replication.py --verbose --logging-level=debug --pdb
+$ IPATEST_YAML_CONFIG=/vagrant/ipa-test-config.yaml ipa-run-tests test_integration/test_simple_replication.py --verbose --logging-level=DEBUG --pdb
 <enjoy/>
 $ logout
 $ vagrant destroy
