@@ -24,7 +24,7 @@ AUTO_DOMAIN_LEVEL = -1
 
 # please keep ABC order of keys
 DEFAULT_CONFIG = dict(
-    box="f26",
+    box="f28",
     ci_config_file="ipa-test-config.yaml",
     domain="ipa.test",
     ipa_ci_ad_admin_name="Administrator",
@@ -145,6 +145,44 @@ box_mapping = {
         },
         "ovirt3": {
             "domain.template": "ipa-Fedora-26-x86_64-developer-brq",
+        },
+    },
+    "f27": {
+        "libvirt": {
+            "override.vm.box": "f27",
+            "override.vm.box_url":
+                "https://download.fedoraproject.org/pub/fedora/linux/releases/"
+                "27/CloudImages/x86_64/images/Fedora-Cloud-Base-Vagrant-27-1.6"
+                ".x86_64.vagrant-libvirt.box",
+        },
+        "virtualbox": {
+            "override.vm.box": "f27",
+            "override.vm.box_url":
+                "http://download.eng.brq.redhat.com/pub/fedora/linux/releases/"
+                "27/CloudImages/x86_64/images/Fedora-Cloud-Base-Vagrant-27-1.6"
+                ".x86_64.vagrant-virtualbox.box"
+        },
+        "ovirt3": {
+            "domain.template": "ipa-Fedora-27-x86_64-developer-brq",
+        },
+    },
+    "f28": {
+        "libvirt": {
+            "override.vm.box": "f28",
+            "override.vm.box_url":
+                "https://download.fedoraproject.org/pub/fedora/linux/releases/"
+                "28/Cloud/x86_64/images/Fedora-Cloud-Base-Vagrant-28-1.1"
+                ".x86_64.vagrant-libvirt.box",
+        },
+        "virtualbox": {
+            "override.vm.box": "f28",
+            "override.vm.box_url":
+                "http://download.eng.brq.redhat.com/pub/fedora/linux/releases/"
+                "28/Cloud/x86_64/images/Fedora-Cloud-Base-Vagrant-28-1.1"
+                ".x86_64.vagrant-virtualbox.box"
+        },
+        "ovirt3": {
+            "domain.template": "ipa-Fedora-28-x86_64-developer-brq",
         },
     },
 }

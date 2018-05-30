@@ -528,6 +528,6 @@ class VagrantCtl(object):
             if errs:
                 logging.error(errs.decode(sys.stderr.encoding))
 
-            logging.debug("vagrant ssh-config:\n" + outs.decode(
+            logging.debug("vagrant ssh-config:\n%s", outs.decode(
                 sys.stdout.encoding))
             return outs.decode(sys.stdout.encoding)

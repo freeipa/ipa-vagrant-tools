@@ -8,14 +8,14 @@ jobs=1
 [MESSAGES CONTROL]
 
 enable=
-    all,
     python3
 
 disable=
     R,
     I,
     invalid-name,
-    missing-docstring
+    missing-docstring,
+    no-absolute-import
 
 
 [REPORTS]
