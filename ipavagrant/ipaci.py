@@ -50,6 +50,7 @@ class IPACITopology(VagrantCtl):
         command = [
             "ssh-keygen",
             "-f", str(os.path.join(self.path, constants.CONTROLLER_SSH_KEY)),
+            "-m", "PEM",
             "-P", "",
         ]
         logging.debug("Generate SSH keys for '%s' topology",
